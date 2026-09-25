@@ -403,6 +403,7 @@ GameObject:
   - component: {fileID: 4044913134923144921}
   - component: {fileID: 4140366027050610504}
   - component: {fileID: 8371333200154685313}
+  - component: {fileID: 4449258359988862260}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -520,6 +521,34 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &4449258359988862260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1071242006406434009}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 505387b3331532f408478f064b7b1add, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
+  rayCamera: {fileID: 4140366027050610504}
+  rayDistance: 3
+  interactMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  triggerInteraction: 1
+  interactAction: {fileID: 1781555164194001046, guid: 6423bebe114e50942af9d905d71b14b9, type: 3}
+  onFocusEnter:
+    m_PersistentCalls:
+      m_Calls: []
+  onFocusExit:
+    m_PersistentCalls:
+      m_Calls: []
+  onInteract:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1207254795233075222
 GameObject:
   m_ObjectHideFlags: 0

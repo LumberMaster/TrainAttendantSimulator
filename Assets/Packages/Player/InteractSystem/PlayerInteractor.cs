@@ -7,29 +7,40 @@ using UnityEngine.InputSystem;
 public class PlayerInteractor : MonoBehaviour
 {
     [Header("Raycast")]
-    [Tooltip("Камера, из которой пускаем луч (обычно Main Camera)")]
     [SerializeField] private Camera rayCamera;
     [SerializeField] private float rayDistance = 3f;
-    [Tooltip("Слои, которые считаем интерактивными")]
     [SerializeField] private LayerMask interactMask = ~0;
     [SerializeField] private QueryTriggerInteraction triggerInteraction = QueryTriggerInteraction.Ignore;
 
     [Header("Input (New Input System)")]
-    [Tooltip("Ссылка на Action типа Button, например Player/Interact")]
     [SerializeField] private InputActionReference interactAction;
 
-    [Header("Global Events (необязательно)")]
+    [Header("Audio")]
+    [Tooltip("AudioSource, из которого проигрывается звук взаимодействия")]
+    [SerializeField] private AudioSource audioSource;
+    [Tooltip("Звук взаимодействия (PlayOneShot)")]
+    [SerializeField] private AudioClip interactSound;
+    [Range(0f, 1f)]
+    [SerializeField] private float interactSoundVolume = 1f;
+
+    [Header("Global Events")]
     public InteractableEvent onFocusEnter;
     public InteractableEvent onFocusExit;
     public InteractableEvent onInteract;
 
     private IInteractable currentTarget;
-
     public IInteractable CurrentTarget => currentTarget;
+
+    public string GetInteractButtonDisplayString()
+    {
+        if (interactAction == null || interactAction.action == null) return "?";
+        return interactAction.action.GetBindingDisplayString();
+    }
 
     private void Awake()
     {
         if (rayCamera == null) rayCamera = Camera.main;
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
     }
 
     private void OnEnable()
@@ -44,14 +55,20 @@ public class PlayerInteractor : MonoBehaviour
     private void OnDisable()
     {
         if (interactAction != null)
-        {
             interactAction.action.performed -= OnInteractPerformed;
-        }
     }
 
     private void OnInteractPerformed(InputAction.CallbackContext ctx)
     {
+        Debug.Log("Press E");
+
         if (currentTarget == null) return;
+
+        // Звук взаимодействия
+        if (audioSource != null && interactSound != null)
+            audioSource.PlayOneShot(interactSound, interactSoundVolume);
+
+        Debug.Log("Press E");
 
         currentTarget.OnInteract();
         onInteract?.Invoke(currentTarget);
@@ -65,10 +82,7 @@ public class PlayerInteractor : MonoBehaviour
         {
             Ray ray = new Ray(rayCamera.transform.position, rayCamera.transform.forward);
             if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, interactMask, triggerInteraction))
-            {
-                // Работает и если коллайдер на дочернем объекте
                 newTarget = hit.collider.GetComponentInParent<IInteractable>();
-            }
         }
 
         if (!ReferenceEquals(newTarget, currentTarget))

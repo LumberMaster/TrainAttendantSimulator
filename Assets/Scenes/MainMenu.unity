@@ -594,6 +594,7 @@ GameObject:
   m_Component:
   - component: {fileID: 597237948}
   - component: {fileID: 597237949}
+  - component: {fileID: 597237950}
   m_Layer: 0
   m_Name: '[MAP]'
   m_TagString: Untagged
@@ -653,6 +654,14 @@ MonoBehaviour:
   m_MinRegionArea: 2
   m_NavMeshData: {fileID: 23800000, guid: fdd67c9d9211636478ae54d9c515613c, type: 2}
   m_BuildHeightMesh: 0
+--- !u!81 &597237950
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 597237947}
+  m_Enabled: 1
 --- !u!1 &624045828
 GameObject:
   m_ObjectHideFlags: 0
@@ -1302,7 +1311,7 @@ Transform:
   m_GameObject: {fileID: 1378195198}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.45, y: -0.09, z: 5.1}
+  m_LocalPosition: {x: 10.52, y: -0.09, z: 0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1466,6 +1475,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3776847921160299816, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: 'footstepClips.Array.data[3]'
+      value: 
+      objectReference: {fileID: 8300000, guid: aff391878554c3949b60aa0993c3f6a3, type: 3}
     - target: {fileID: 4810146401139228279, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1505,6 +1518,10 @@ PrefabInstance:
     - target: {fileID: 4810146401139228279, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6692103701479826993, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_Volume
+      value: 0.567
       objectReference: {fileID: 0}
     - target: {fileID: 7138230222043278574, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
       propertyPath: m_Name

@@ -44,6 +44,36 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Скрывать курсор при старте игры")]
     [SerializeField] private bool hideCursorOnStart = true;
 
+    [Header("Звуки — шаги")]
+    [Tooltip("AudioSource для шагов (loop выключен, PlayOnAwake выключен)")]
+    [SerializeField] private AudioSource footstepSource;
+    [Tooltip("Набор клипов шагов (выбирается случайно)")]
+    [SerializeField] private AudioClip[] footstepClips;
+    [Tooltip("Интервал между шагами при ходьбе (сек)")]
+    [SerializeField] private float walkStepInterval = 0.5f;
+    [Tooltip("Интервал при беге (меньше = чаще)")]
+    [SerializeField] private float sprintStepInterval = 0.3f;
+    [Tooltip("Интервал при приседе")]
+    [SerializeField] private float crouchStepInterval = 0.7f;
+    [Tooltip("Минимальная скорость, при которой вообще играются шаги")]
+    [SerializeField] private float minMoveSpeedForSteps = 0.4f;
+    [Tooltip("Питч при ходьбе")]
+    [SerializeField] private float walkPitch = 1.0f;
+    [Tooltip("Питч при беге (звук «быстрее»)")]
+    [SerializeField] private float sprintPitch = 1.2f;
+    [Tooltip("Питч при приседе")]
+    [SerializeField] private float crouchPitch = 0.85f;
+    [Tooltip("Случайный разброс питча ±, чтобы шаги не звучали одинаково")]
+    [SerializeField] private float pitchRandomRange = 0.05f;
+    [Tooltip("Громкость шагов при приседе (множитель)")]
+    [Range(0f, 1f)][SerializeField] private float crouchVolumeMul = 0.5f;
+
+    [Header("Звуки — прыжок")]
+    [Tooltip("AudioSource для разовых звуков (прыжок и т.п.)")]
+    [SerializeField] private AudioSource oneShotSource;
+    [SerializeField] private AudioClip jumpClip;
+    [Range(0f, 1f)][SerializeField] private float jumpVolume = 1f;
+
     [Header("Анимации")]
     [SerializeField] private string animSpeed = "Speed";
     [SerializeField] private string animGrounded = "Grounded";
@@ -72,8 +102,11 @@ public class PlayerController : MonoBehaviour
 
     private float currentYaw, targetYaw, currentPitch, targetPitch, yawVelocity, pitchVelocity;
 
-    // Блокировка ввода (используется при показе курсора — пауза, инвентарь и т.п.)
+    // Блокировка ввода
     private bool inputLocked;
+
+    // Таймер шагов
+    private float stepTimer;
 
     // =====================================================================
     private void Awake()
@@ -86,11 +119,24 @@ public class PlayerController : MonoBehaviour
 
         controller.height = standHeight;
         controller.center = new Vector3(0f, standHeight * 0.5f, 0f);
+
+        // Подстраховка: если источники не заданы — попробуем найти/создать
+        if (footstepSource == null)
+        {
+            footstepSource = gameObject.AddComponent<AudioSource>();
+            footstepSource.playOnAwake = false;
+            footstepSource.loop = false;
+        }
+        if (oneShotSource == null)
+        {
+            oneShotSource = gameObject.AddComponent<AudioSource>();
+            oneShotSource.playOnAwake = false;
+            oneShotSource.loop = false;
+        }
     }
 
     private void Start()
     {
-        // Применяем стартовое состояние курсора (скрыт = играем)
         SetCursorVisible(!hideCursorOnStart);
     }
 
@@ -102,7 +148,6 @@ public class PlayerController : MonoBehaviour
             moveAction.action.canceled += OnMoveCanceled;
             moveAction.action.Enable();
         }
-        // lookAction читается напрямую в HandleLook — колбэки не нужны
         if (lookAction != null) lookAction.action.Enable();
         if (jumpAction != null)
         {
@@ -160,12 +205,8 @@ public class PlayerController : MonoBehaviour
     private void OnAttackPerformed(InputAction.CallbackContext ctx) => DoAttack();
 
     // =====================================================================
-    // Публичное API для курсора / блокировки
+    // Публичное API
     // =====================================================================
-    /// <summary>
-    /// true  — курсор виден, мышь свободна, ввод персонажа заблокирован.
-    /// false — курсор скрыт и залочен, управление активно.
-    /// </summary>
     public void SetCursorVisible(bool visible)
     {
         Cursor.visible = visible;
@@ -175,18 +216,17 @@ public class PlayerController : MonoBehaviour
 
         if (inputLocked)
         {
-            // Сбрасываем накопленный ввод, чтобы персонаж не «доехал» по инерции
             moveInput = Vector2.zero;
             currentMoveVelocity = Vector3.zero;
             smoothMoveVelocity = Vector3.zero;
 
-            // Синхронизируем target с current, чтобы при разблокировке камера не дёрнулась
             targetYaw = currentYaw;
             targetPitch = currentPitch;
             yawVelocity = 0f;
             pitchVelocity = 0f;
 
             SetSprint(false);
+            stepTimer = 0f;
 
             if (isMoving)
             {
@@ -196,11 +236,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    /// <summary>Удобный переключатель.</summary>
-    public void ToggleCursor()
-    {
-        SetCursorVisible(!Cursor.visible);
-    }
+    public void ToggleCursor() => SetCursorVisible(!Cursor.visible);
 
     public bool IsInputLocked => inputLocked;
 
@@ -212,6 +248,7 @@ public class PlayerController : MonoBehaviour
         HandleLook();
         HandleMovement();
         HandleCrouch();
+        HandleFootsteps();
         UpdateAnimator();
     }
 
@@ -219,8 +256,6 @@ public class PlayerController : MonoBehaviour
     {
         if (cameraRoot == null || inputLocked) return;
 
-        // Читаем значение НАПРЯМУЮ из действия — так при остановке мыши
-        // мы сразу получаем (0,0), и никакой «остаточной» инерции нет.
         Vector2 look = lookAction != null ? lookAction.action.ReadValue<Vector2>() : Vector2.zero;
 
         targetYaw += look.x * lookSensitivity;
@@ -248,7 +283,6 @@ public class PlayerController : MonoBehaviour
         isGrounded = controller.isGrounded ||
                      Physics.CheckSphere(spherePos, groundCheckRadius, groundMask, QueryTriggerInteraction.Ignore);
 
-        // При заблокированном вводе горизонтального движения нет, но гравитация работает
         Vector3 inputDir = inputLocked
             ? Vector3.zero
             : (transform.right * moveInput.x + transform.forward * moveInput.y);
@@ -297,6 +331,75 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // =====================================================================
+    // Звук шагов
+    // =====================================================================
+    private void HandleFootsteps()
+    {
+        if (footstepSource == null || footstepClips == null || footstepClips.Length == 0)
+            return;
+
+        // Не играем в воздухе или при заблокированном управлении
+        if (!isGrounded || inputLocked)
+        {
+            stepTimer = 0f;
+            return;
+        }
+
+        float flatSpeed = new Vector3(currentMoveVelocity.x, 0f, currentMoveVelocity.z).magnitude;
+        if (flatSpeed < minMoveSpeedForSteps)
+        {
+            stepTimer = 0f;
+            return;
+        }
+
+        // Определяем интервал, питч и громкость в зависимости от состояния
+        float interval;
+        float pitch;
+        float volume = 1f;
+
+        if (isCrouching)
+        {
+            interval = crouchStepInterval;
+            pitch = crouchPitch;
+            volume = crouchVolumeMul;
+        }
+        else if (isSprinting)
+        {
+            interval = sprintStepInterval;
+            pitch = sprintPitch;
+        }
+        else
+        {
+            interval = walkStepInterval;
+            pitch = walkPitch;
+        }
+
+        stepTimer -= Time.deltaTime;
+        if (stepTimer <= 0f)
+        {
+            stepTimer = interval;
+            PlayFootstep(pitch, volume);
+        }
+    }
+
+    private void PlayFootstep(float basePitch, float volume)
+    {
+        AudioClip clip = footstepClips[Random.Range(0, footstepClips.Length)];
+        if (clip == null) return;
+
+        footstepSource.pitch = basePitch + Random.Range(-pitchRandomRange, pitchRandomRange);
+        footstepSource.PlayOneShot(clip, volume);
+    }
+
+    private void PlayJumpSound()
+    {
+        if (jumpClip == null || oneShotSource == null) return;
+        oneShotSource.pitch = 1f;
+        oneShotSource.PlayOneShot(jumpClip, jumpVolume);
+    }
+
+    // =====================================================================
     private void UpdateAnimator()
     {
         if (animator == null) return;
@@ -311,6 +414,8 @@ public class PlayerController : MonoBehaviour
     {
         if (inputLocked || !isGrounded) return;
         verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+        PlayJumpSound();
 
         if (animator != null && !string.IsNullOrEmpty(animJumpTrigger))
             animator.SetTrigger(animJumpTrigger);

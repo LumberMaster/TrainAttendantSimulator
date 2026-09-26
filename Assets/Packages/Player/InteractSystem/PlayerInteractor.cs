@@ -60,8 +60,8 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext ctx)
     {
-
         if (currentTarget == null) return;
+        if (!currentTarget.CanInteract) return;
 
         // Звук взаимодействия
         if (audioSource != null && interactSound != null)
@@ -79,8 +79,16 @@ public class PlayerInteractor : MonoBehaviour
         {
             Ray ray = new Ray(rayCamera.transform.position, rayCamera.transform.forward);
             if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, interactMask, triggerInteraction))
-                newTarget = hit.collider.GetComponentInParent<IInteractable>();
+            {
+                var candidate = hit.collider.GetComponentInParent<IInteractable>();
+                if (candidate != null && candidate.CanFocus)
+                    newTarget = candidate;
+            }
         }
+
+        // Если у текущей цели внезапно выключили фокус — сбрасываем её.
+        if (currentTarget != null && !currentTarget.CanFocus)
+            newTarget = null;
 
         if (!ReferenceEquals(newTarget, currentTarget))
         {

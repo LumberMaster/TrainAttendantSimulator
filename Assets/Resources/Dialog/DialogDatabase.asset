@@ -13,23 +13,18 @@ MonoBehaviour:
   m_Name: DialogDatabase
   m_EditorClassIdentifier: Assembly-CSharp::Game.DialogDatabase
   roles:
+  - roleId: Player
+    displayName: "\u0412\u044B"
+    nameColor: {r: 0, g: 0, b: 0, a: 1}
+    portrait: {fileID: 0}
   - roleId: NPC_1
     displayName: "\u0412\u0438\u0442\u0430\u043B\u0438\u0439"
-    nameColor: {r: 0, g: 0, b: 0, a: 0}
+    nameColor: {r: 0, g: 0, b: 0, a: 1}
     portrait: {fileID: 0}
-  - roleId: Player
-    displayName: Player
-    nameColor: {r: 0, g: 0, b: 0, a: 0}
+  - roleId: NPC_2
+    displayName: "\u0410\u043D\u0430\u0441\u0442\u0430\u0441\u0438\u044F"
+    nameColor: {r: 0, g: 0, b: 0, a: 1}
     portrait: {fileID: 0}
   dialogs:
-  - id: NPC_1_Dialog_1
-    description: "\u0420\u0430\u0437\u0433\u043E\u0432\u043E\u0440 \u0441 \u0412\u0438\u0442\u0430\u043B\u0438\u0435\u043C"
-    lines:
-    - roleId: NPC_1
-      text: 
-      audio: {fileID: 0}
-      fallbackDuration: 0
-    - roleId: Player
-      text: 
-      audio: {fileID: 0}
-      fallbackDuration: 0
+  - {fileID: 11400000, guid: f6bb6b6e020677e4bb7530c3bc699365, type: 2}
+  - {fileID: 11400000, guid: 3b5a7db2acd3db148895dc11f21207dc, type: 2}

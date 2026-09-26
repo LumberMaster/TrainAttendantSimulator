@@ -5,17 +5,11 @@ namespace Game
     /// <summary>
     /// Вешается на NPC. Держит AudioSource для озвучки реплик
     /// и предоставляет свои данные DialogSystem.
+    /// Имя в UI берётся из БД по roleId реплики, а не отсюда.
     /// </summary>
     [RequireComponent(typeof(AudioSource))]
     public class DialogSpeaker : MonoBehaviour
     {
-        [Header("Identity")]
-        [Tooltip("Имя для отображения в UI. Если пусто — берётся displayName роли.")]
-        [SerializeField] private string displayName;
-
-        [Tooltip("Опциональный портрет, перекрывает портрет роли.")]
-        [SerializeField] private Sprite overridePortrait;
-
         [Header("References")]
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private ScenarioUnit scenarioUnit;
@@ -27,8 +21,6 @@ namespace Game
         [Tooltip("Если пусто — сообщение о старте диалога не отправляется.")]
         [SerializeField] private string onDialogStartMessage = "DialogStart";
 
-        public string DisplayName => displayName;
-        public Sprite OverridePortrait => overridePortrait;
         public AudioSource AudioSource => audioSource;
         public ScenarioUnit ScenarioUnit => scenarioUnit;
         public string UnitName => scenarioUnit != null ? scenarioUnit.ScenarioUnitName : string.Empty;

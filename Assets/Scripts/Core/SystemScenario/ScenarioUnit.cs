@@ -13,7 +13,7 @@ namespace Game
         public string ScenarioUnitName => scenarioUnitName;
 
         /// <summary>Вызывается при ЛЮБОМ полученном из сценария сообщении (до обработчиков).</summary>
-        public event Action<string> OnMessageReceived;
+        public event Action<ScenarioUnit, string> OnMessageReceived;
 
         public void SendMessageToScenario(string message)
         {
@@ -23,10 +23,8 @@ namespace Game
 
         public void ReceiveMessage(string message)
         {
-            // Сначала оповещаем слушателей (DialogSystem и т.п.)
-            OnMessageReceived?.Invoke(message);
+            OnMessageReceived?.Invoke(this, message);
 
-            // Затем — UnityEvent-обработчики из инспектора
             foreach (var handler in messageHandlers)
             {
                 if (handler.Message == message)

@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Game Platform</title>
+<style>
+  :root{
+    --bg:#0b0d11; --panel:#12141a; --panel-2:#171a22; --border:#242838;
+    --text:#e8eaf0; --muted:#8a90a3; --accent:#3a74d9; --accent-2:#4f8cff;
+    --danger:#e05555; --ok:#4ecb71; --gold:#f5c451;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);
+            font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;
+            font-size:15px;line-height:1.4;overflow:hidden}
+  button{font-family:inherit;font-size:14px;border:0;border-radius:8px;cursor:pointer;
+         padding:10px 16px;color:#fff;background:var(--accent);transition:filter .15s,transform .05s}
+  button:hover:not(:disabled){filter:brightness(1.12)}
+  button:active:not(:disabled){transform:translateY(1px)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+  button.danger{background:var(--danger)}
+  input{width:100%;padding:10px 12px;background:#0e1016;border:1px solid var(--border);
+        border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;outline:none;
+        transition:border-color .15s}
+  input:focus{border-color:var(--accent)}
+  input::placeholder{color:#5a6178}
+  a{color:var(--accent-2);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* Screens */
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden}
+  .screen.active{display:flex}
+
+  /* Auth */
+  #screen-auth{align-items:center;justify-content:center;padding:24px}
+  .auth-card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--border);
+             border-radius:14px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .auth-card h1{margin:0 0 4px;font-size:22px;letter-spacing:.5px}
+  .auth-card .sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+  .tabs{display:flex;gap:6px;margin-bottom:18px;background:#0e1016;padding:4px;border-radius:10px;
+        border:1px solid var(--border)}
+  .tabs button{flex:1;background:transparent;color:var(--muted);padding:8px 12px;border-radius:7px}
+  .tabs button.active{background:var(--panel-2);color:var(--text)}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;letter-spacing:.3px}
+  .form-error{color:var(--danger);font-size:13px;min-height:18px;margin:6px 0 12px}
+  .hint{color:var(--muted);font-size:12px;margin-top:14px;text-align:center}
+
+  /* Header */
+  .topbar{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--border);
+          background:var(--panel);flex-shrink:0}
+  .topbar .logo{font-weight:600;letter-spacing:.5px}
+  .topbar .spacer{flex:1}
+  .topbar .user{color:var(--muted);font-size:13px}
+  .topbar .user b{color:var(--text);font-weight:500}
+
+  /* Content */
+  .content{flex:1;overflow-y:auto;padding:22px}
+  .section-title{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+                 margin:0 0 14px;font-weight:500}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;
+        display:flex;flex-direction:column;gap:10px;transition:border-color .15s,transform .1s}
+  .card:hover{border-color:#3a4155}
+  .card h3{margin:0;font-size:16px}
+  .card p{margin:0;color:var(--muted);font-size:13px;flex:1}
+  .card .actions{display:flex;gap:8px;margin-top:4px}
+  .card .actions button{flex:1}
+
+  /* Leaderboard */
+  .lb-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+  .lb-head h2{margin:0;font-size:20px;flex:1;min-width:200px}
+  .lb-table{width:100%;border-collapse:collapse;font-size:14px}
+  .lb-table th{text-align:left;padding:10px 14px;color:var(--muted);font-weight:500;
+               font-size:12px;letter-spacing:.4px;text-transform:uppercase;
+               border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:1}
+  .lb-table td{padding:10px 14px;border-bottom:1px solid #1b1e28}
+  .lb-table tr:hover td{background:rgba(79,140,255,.05)}
+  .lb-table .place{width:44px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .lb-table tr.p1 .place{color:var(--gold);font-weight:600}
+  .lb-table tr.p2 .place{color:#c9c9d6;font-weight:600}
+  .lb-table tr.p3 .place{color:#d98c62;font-weight:600}
+  .lb-table .num{font-variant-numeric:tabular-nums}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+
+  /* Game */
+  #screen-game{position:relative}
+  #game-back{position:absolute;top:14px;left:14px;z-index:10}
+  #game-hud{position:absolute;top:14px;right:14px;z-index:10;background:rgba(0,0,0,.55);
+            border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;
+            color:var(--muted);backdrop-filter:blur(6px);display:none}
+  #game-hud b{color:var(--text);font-variant-numeric:tabular-nums}
+  #unity-canvas{width:100%;height:100%;background:var(--bg);display:block;outline:none}
+  #unity-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+                 flex-direction:column;gap:18px;background:var(--bg);color:var(--muted);font-size:15px}
+  #unity-loading.hidden{display:none}
+  .bar{width:280px;height:6px;background:#1b1e28;border-radius:3px;overflow:hidden}
+  .bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+
+  /* Toast */
+  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);
+         background:#1c1f2a;border:1px solid var(--border);padding:12px 18px;border-radius:10px;
+         font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+         max-width:80vw;z-index:100;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.err{border-color:var(--danger)}
+  #toast.ok{border-color:var(--ok)}
+
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.25);
+           border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-3px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ================= AUTH ================= -->
+<section id="screen-auth" class="screen active">
+  <div class="auth-card">
+    <h1>Game Platform</h1>
+    <div class="sub">Войдите или создайте аккаунт</div>
+
+    <div class="tabs" role="tablist">
+      <button id="tab-login" class="active" type="button">Вход</button>
+      <button id="tab-register" type="button">Регистрация</button>
+    </div>
+
+    <form id="form-login" autocomplete="on">
+      <div class="field">
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" required autocomplete="email" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label for="login-pass">Пароль</label>
+        <input id="login-pass" type="password" required autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <div class="form-error" id="login-err"></div>
+      <button type="submit" style="width:100%" id="login-submit">Войти</button>
+    </form>
+
+    <form id="form-register" autocomplete="on" style="display:none">
+      <div class="field">
+        <label for="reg-email">Email</label>
+        <input id="reg-email" type="email" required autocomplete="email" placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label for="reg-pass">Пароль</label>
+        <input id="reg-pass" type="password" required minlength="1" autocomplete="new-password" placeholder="••••••••">
+      </div>
+      <div class="field">
+        <label for="reg-first">Имя</label>
+        <input id="reg-first" type="text" required placeholder="Иван">
+      </div>
+      <div class="field">
+        <label for="reg-second">Фамилия</label>
+        <input id="reg-second" type="text" required placeholder="Иванов">
+      </div>
+      <div class="field">
+        <label for="reg-third">Отчество <span style="opacity:.5">(необязательно)</span></label>
+        <input id="reg-third" type="text" placeholder="Иванович">
+      </div>
+      <div class="form-error" id="register-err"></div>
+      <button type="submit" style="width:100%" id="register-submit">Создать аккаунт</button>
+    </form>
+
+    <div class="hint">Данные хранятся на сервере платформы</div>
+  </div>
+</section>
+
+<!-- ================= SCENARIOS ================= -->
+<section id="screen-scenarios" class="screen">
+  <header class="topbar">
+    <div class="logo">🎮 Game Platform</div>
+    <div class="spacer"></div>
+    <div class="user" id="user-info"></div>
+    <button class="ghost" id="btn-logout" type="button">Выйти</button>
+  </header>
+  <div class="content">
+    <h2 class="section-title">Доступные сценарии</h2>
+    <div id="scenarios-grid" class="grid"></div>
+    <div id="scenarios-empty" class="empty" style="display:none">Сценариев пока нет</div>
+  </div>
+</section>
+
+<!-- ================= LEADERBOARD ================= -->
+<section id="screen-leaderboard" class="screen">
+  <header class="topbar">
+    <button class="ghost" id="lb-back" type="button">← Назад</button>
+    <div class="logo" id="lb-title" style="font-size:16px">Рейтинг</div>
+    <div class="spacer"></div>
+    <div class="user" id="lb-user"></div>
+  </header>
+  <div class="content">
+    <div id="lb-content"></div>
+  </div>
+</section>
+
+<!-- ================= GAME ================= -->
+<section id="screen-game" class="screen">
+  <button class="ghost" id="game-back" type="button">← Выйти из сценария</button>
+  <div id="game-hud">
+    <div>Сценарий: <b id="hud-scenario">—</b></div>
+    <div>Время: <b id="hud-timer">00:00</b></div>
+  </div>
+  <div id="unity-loading">
+    <div>Загрузка движка…</div>
+    <div class="bar"><i id="unity-progress"></i></div>
+    <div id="unity-progress-text" style="font-size:12px;opacity:.6">0%</div>
+  </div>
+  <canvas id="unity-canvas" tabindex="-1"></canvas>
+</section>
+
+<div id="toast"></div>
+
+<!-- Unity loader. Плейсхолдеры вида LOADER_FILENAME подставляет Unity при сборке. -->
+<script src="Build/{{{ LOADER_FILENAME }}}"></script>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   КОНФИГУРАЦИЯ
+   ===================================================================== */
+const CONFIG = {
+  // Бэкенд платформы.
+  API_BASE: "http://91.229.11.11:8001",
+
+  // Ключ для хранения отображаемых данных пользователя между перезагрузками.
+  STORAGE_KEY: "gp_user",
+};
+
+/* =====================================================================
+   HTTP-КЛИЕНТ
+   ===================================================================== */
+async function api(path, { method = "GET", body = null } = {}) {
+  const url = CONFIG.API_BASE + path;
+  const opts = {
+    method,
+    credentials: "include",        // cookie-сессия едет сюда
+    headers: { "Accept": "application/json" },
+  };
+  if (body !== null) {
+    opts.headers["Content-Type"] = "application/json";
+    opts.body = JSON.stringify(body);
+  }
+
+  const res = await fetch(url, opts);
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+
+  if (!res.ok) {
+    const err = new Error(formatError(data) || `HTTP ${res.status}`);
+    err.status = res.status;
+    err.payload = data;
+    throw err;
+  }
+  return data;
+}
+
+function formatError(payload) {
+  if (!payload) return "";
+  if (typeof payload === "string") return payload;
+  if (Array.isArray(payload.detail)) {
+    return payload.detail.map(e => `${(e.loc || []).slice(1).join(".")}: ${e.msg}`).join("; ");
+  }
+  if (payload.detail) return typeof payload.detail === "string" ? payload.detail : JSON.stringify(payload.detail);
+  return JSON.stringify(payload);
+}
+
+/* =====================================================================
+   СОСТОЯНИЕ
+   ===================================================================== */
+const State = {
+  user: null,
+  scenarios: [],
+  activeScenario: null,
+  activeResultId: null,
+  gameStartedAt: 0,
+  unity: null,
+  unityLoading: null,
+  timerHandle: null,
+};
+
+/* =====================================================================
+   UI HELPERS
+   ===================================================================== */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+function showScreen(id) {
+  $$(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+}
+
+let toastTimer = null;
+function toast(msg, kind = "") {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.className = "show " + kind;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = kind; }, 3200);
+}
+
+function setBusy(btn, busy, busyText = "…") {
+  if (!btn) return;
+  if (busy) {
+    btn.dataset._text = btn.textContent;
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> ${busyText}`;
+  } else {
+    btn.disabled = false;
+    btn.textContent = btn.dataset._text || btn.textContent;
+  }
+}
+
+function fmtTime(seconds) {
+  seconds = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const pad = n => String(n).padStart(2, "0");
+  return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => (
+    { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]
+  ));
+}
+
+/* =====================================================================
+   AUTH
+   ===================================================================== */
+function persistUser(user) {
+  State.user = user;
+  try {
+    if (user) localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(user));
+    else localStorage.removeItem(CONFIG.STORAGE_KEY);
+  } catch {}
+}
+
+function loadUserFromStorage() {
+  try {
+    const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function renderUserChips() {
+  const u = State.user;
+  const txt = u ? `<b>${escapeHtml(u.first_name)} ${escapeHtml(u.second_name)}</b> · ${escapeHtml(u.email)}` : "";
+  $("#user-info").innerHTML = txt;
+  $("#lb-user").innerHTML = txt;
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const err = $("#login-err");
+  err.textContent = "";
+  const btn = $("#login-submit");
+  setBusy(btn, true, "Вход…");
+  try {
+    const user = await api("/api/auth/login", {
+      method: "POST",
+      body: { email: $("#login-email").value.trim(), password: $("#login-pass").value },
+    });
+    persistUser(user);
+    await enterApp();
+  } catch (ex) {
+    err.textContent = "Ошибка: " + ex.message;
+  } finally {
+    setBusy(btn, false);
+  }
+}
+
+async function doRegister(e) {
+  e.preventDefault();
+  const err = $("#register-err");
+  err.textContent = "";
+  const btn = $("#register-submit");
+  setBusy(btn, true, "Создание…");
+  try {
+    const third = $("#reg-third").value.trim();
+    const user = await api("/api/auth/register", {
+      method: "POST",
+      body: {
+        email: $("#reg-email").value.trim(),
+        password: $("#reg-pass").value,
+        first_name: $("#reg-first").value.trim(),
+        second_name: $("#reg-second").value.trim(),
+        third_name: third ? third : null,
+      },
+    });
+    persistUser(user);
+    await enterApp();
+  } catch (ex) {
+    err.textContent = "Ошибка: " + ex.message;
+  } finally {
+    setBusy(btn, false);
+  }
+}
+
+function doLogout() {
+  // В спецификации нет /logout — просто сбрасываем состояние.
+  persistUser(null);
+  stopTimer();
+  renderUserChips();
+  resetAuthForms();
+  showScreen("screen-auth");
+  toast("Вы вышли из аккаунта");
+}
+
+function resetAuthForms() {
+  ["form-login", "form-register"].forEach(id => { const f = document.getElementById(id); if (f) f.reset(); });
+  $("#login-err").textContent = "";
+  $("#register-err").textContent = "";
+}
+
+/* =====================================================================
+   APP FLOW
+   ===================================================================== */
+async function enterApp() {
+  renderUserChips();
+  showScreen("screen-scenarios");
+  await loadScenarios();
+}
+
+async function loadScenarios() {
+  const grid = $("#scenarios-grid");
+  const empty = $("#scenarios-empty");
+  grid.innerHTML = `<div class="empty" style="grid-column:1/-1">Загрузка…</div>`;
+  empty.style.display = "none";
+
+  try {
+    const list = await api("/api/scenarios/");
+    State.scenarios = list || [];
+    renderScenarios();
+  } catch (ex) {
+    grid.innerHTML = "";
+    if (ex.status === 401 || ex.status === 403) {
+      persistUser(null);
+      showScreen("screen-auth");
+      toast("Сессия истекла, войдите заново", "err");
+    } else {
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1">Ошибка загрузки: ${escapeHtml(ex.message)}</div>`;
+    }
+  }
+}
+
+function renderScenarios() {
+  const grid = $("#scenarios-grid");
+  const empty = $("#scenarios-empty");
+  grid.innerHTML = "";
+
+  if (!State.scenarios.length) {
+    empty.style.display = "block";
+    return;
+  }
+
+  for (const s of State.scenarios) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <h3>${escapeHtml(s.name)}</h3>
+      <p>${s.description ? escapeHtml(s.description) : "<i style='opacity:.5'>Без описания</i>"}</p>
+      <div class="actions">
+        <button class="play" type="button">▶ Играть</button>
+        <button class="board ghost" type="button">🏆 Рейтинг</button>
+      </div>
+    `;
+    card.querySelector(".play").addEventListener("click", () => startScenario(s));
+    card.querySelector(".board").addEventListener("click", () => openLeaderboard(s));
+    grid.appendChild(card);
+  }
+}
+
+/* =====================================================================
+   LEADERBOARD
+   ===================================================================== */
+async function openLeaderboard(scenario) {
+  showScreen("screen-leaderboard");
+  $("#lb-title").textContent = "Рейтинг — " + scenario.name;
+
+  const box = $("#lb-content");
+  box.innerHTML = `<div class="empty">Загрузка…</div>`;
+
+  try {
+    const entries = await api("/api/scenarios/leaderboard", {
+      method: "POST",
+      body: { scenario_uuid: scenario.scenario_uuid },
+    });
+    renderLeaderboard(entries || []);
+  } catch (ex) {
+    box.innerHTML = `<div class="empty">Ошибка: ${escapeHtml(ex.message)}</div>`;
+  }
+}
+
+function renderLeaderboard(entries) {
+  const box = $("#lb-content");
+  if (!entries.length) {
+    box.innerHTML = `<div class="empty">Пока никто не прошёл этот сценарий.<br><span style="font-size:12px;opacity:.6">Стань первым!</span></div>`;
+    return;
+  }
+
+  const rows = entries.map((e, i) => {
+    const place = i + 1;
+    const cls = place <= 3 ? ` class="p${place}"` : "";
+    const loy = (e.passenger_loyality ?? null) !== null ? e.passenger_loyality : "—";
+    const sec = (e.security_rating   ?? null) !== null ? e.security_rating   : "—";
+    const end = e.time_end ? fmtDate(e.time_end) : "—";
+    return `
+      <tr${cls}>
+        <td class="place">${place}</td>
+        <td>${escapeHtml(e.first_name)} ${escapeHtml(e.second_name)}</td>
+        <td class="num">${fmtTime(e.duration_playtime)}</td>
+        <td class="num">${loy}</td>
+        <td class="num">${sec}</td>
+        <td style="color:var(--muted);font-size:12px">${end}</td>
+      </tr>`;
+  }).join("");
+
+  box.innerHTML = `
+    <div class="lb-head">
+      <h2>Топ игроков по времени прохождения</h2>
+    </div>
+    <table class="lb-table">
+      <thead><tr>
+        <th>#</th><th>Игрок</th><th>Время</th>
+        <th>Лояльность</th><th>Безопасность</th><th>Завершено</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+/* =====================================================================
+   GAME (Unity WebGL)
+   ===================================================================== */
+async function startScenario(scenario) {
+  State.activeScenario = scenario;
+  State.activeResultId = null;
+  $("#hud-scenario").textContent = scenario.name;
+  $("#hud-timer").textContent = "00:00";
+  $("#game-hud").style.display = "none";
+
+  showScreen("screen-game");
+
+  try {
+    await ensureUnity();
+  } catch (ex) {
+    toast("Не удалось загрузить игру: " + ex.message, "err");
+    return;
+  }
+
+  try {
+    const res = await api("/api/scenarios/start", {
+      method: "POST",
+      body: { scenario_uuid: scenario.scenario_uuid },
+    });
+    State.activeResultId = res.id;
+    State.gameStartedAt = performance.now();
+    startTimer();
+    $("#game-hud").style.display = "block";
+
+    // Опциональный мост в Unity: если в сцене есть GameObject "GameBridge"
+    // с методом OnScenarioStarted(string json) — он получит данные.
+    bridgeToUnity("OnScenarioStarted", JSON.stringify({
+      result_id: res.id,
+      scenario_uuid: scenario.scenario_uuid,
+      scenario_name: scenario.name,
+    }));
+  } catch (ex) {
+    toast("Не удалось начать сценарий: " + ex.message, "err");
+  }
+}
+
+function startTimer() {
+  stopTimer();
+  State.timerHandle = setInterval(() => {
+    const s = (performance.now() - State.gameStartedAt) / 1000;
+    $("#hud-timer").textContent = fmtTime(s);
+  }, 500);
+}
+
+function stopTimer() {
+  if (State.timerHandle) { clearInterval(State.timerHandle); State.timerHandle = null; }
+}
+
+function leaveGame() {
+  stopTimer();
+  $("#game-hud").style.display = "none";
+  State.activeScenario = null;
+  State.activeResultId = null;
+  showScreen("screen-scenarios");
+}
+
+function ensureUnity() {
+  if (State.unity) return Promise.resolve(State.unity);
+  if (State.unityLoading) return State.unityLoading;
+
+  const canvas = $("#unity-canvas");
+  const loading = $("#unity-loading");
+  const bar = $("#unity-progress");
+  const barText = $("#unity-progress-text");
+  loading.classList.remove("hidden");
+
+  const buildUrl = "Build";
+  State.unityLoading = createUnityInstance(canvas, {
+    dataUrl:      buildUrl + "/{{{ DATA_FILENAME }}}",
+    frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+    codeUrl:      buildUrl + "/{{{ CODE_FILENAME }}}",
+#if MEMORY_FILENAME
+    memoryUrl:    buildUrl + "/{{{ MEMORY_FILENAME }}}",
+#endif
+#if SYMBOLS_FILENAME
+    symbolsUrl:   buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+#endif
+    streamingAssetsUrl: "StreamingAssets",
+    companyName:   "{{{ COMPANY_NAME }}}",
+    productName:   "{{{ PRODUCT_NAME }}}",
+    productVersion:"{{{ PRODUCT_VERSION }}}",
+  }, (p) => {
+    const pct = Math.round(p * 100);
+    bar.style.width = pct + "%";
+    barText.textContent = pct + "%";
+  }).then((instance) => {
+    State.unity = instance;
+    loading.classList.add("hidden");
+    return instance;
+  }).catch((err) => {
+    State.unityLoading = null;
+    loading.innerHTML = `<div style="color:var(--danger)">Ошибка загрузки: ${escapeHtml(String(err))}</div>`;
+    throw err;
+  });
+
+  return State.unityLoading;
+}
+
+/**
+ * Опциональный мост в Unity. Если объекта GameBridge в сцене нет —
+ * вызов просто игнорируется.
+ */
+function bridgeToUnity(method, payload) {
+  if (!State.unity) return;
+  try {
+    State.unity.SendMessage("GameBridge", method, payload || "");
+  } catch (_) { /* GameBridge не обязателен */ }
+}
+
+/* =====================================================================
+   ПУБЛИЧНОЕ API ДЛЯ ИГРЫ
+   Из Unity (через .jslib или внешний код) можно вызывать:
+     window.GamePlatform.finish({ passenger_loyality, security_rating })
+   ===================================================================== */
+window.GamePlatform = {
+  state: () => ({
+    user: State.user,
+    scenario: State.activeScenario,
+    result_id: State.activeResultId,
+  }),
+
+  async finish({ passenger_loyality, security_rating, duration_playtime, result_json = null }) {
+    if (!State.activeResultId) throw new Error("Сценарий не запущен");
+    const duration = duration_playtime ??
+      Math.round((performance.now() - State.gameStartedAt) / 1000);
+
+    const res = await api("/api/scenarios/finish", {
+      method: "POST",
+      body: {
+        result_id: State.activeResultId,
+        passenger_loyality: Math.max(0, Math.round(passenger_loyality || 0)),
+        security_rating:    Math.max(0, Math.round(security_rating || 0)),
+        duration_playtime:  Math.max(0, Math.round(duration)),
+        result_json: result_json ?? null,
+      },
+    });
+
+    stopTimer();
+    toast("Результат сохранён", "ok");
+    return res;
+  },
+
+  toScenarios: leaveGame,
+
+  openLeaderboardByUuid(uuid) {
+    const s = State.scenarios.find(x => x.scenario_uuid === uuid);
+    if (s) openLeaderboard(s);
+  },
+};
+
+/* =====================================================================
+   ОБРАБОТЧИКИ СОБЫТИЙ
+   ===================================================================== */
+$("#tab-login").addEventListener("click", () => {
+  $("#tab-login").classList.add("active");
+  $("#tab-register").classList.remove("active");
+  $("#form-login").style.display = "";
+  $("#form-register").style.display = "none";
+});
+$("#tab-register").addEventListener("click", () => {
+  $("#tab-register").classList.add("active");
+  $("#tab-login").classList.remove("active");
+  $("#form-register").style.display = "";
+  $("#form-login").style.display = "none";
+});
+
+$("#form-login").addEventListener("submit", doLogin);
+$("#form-register").addEventListener("submit", doRegister);
+
+$("#btn-logout").addEventListener("click", doLogout);
+$("#lb-back").addEventListener("click", () => { showScreen("screen-scenarios"); });
+$("#game-back").addEventListener("click", leaveGame);
+
+/* =====================================================================
+   СТАРТ
+   ===================================================================== */
+(async function init() {
+  const saved = loadUserFromStorage();
+  if (saved) {
+    State.user = saved;
+    renderUserChips();
+    try {
+      await loadScenarios();
+      showScreen("screen-scenarios");
+      return;
+    } catch {}
+    persistUser(null);
+  }
+  showScreen("screen-auth");
+})();
+
+/* Адаптив канваса при resize окна */
+window.addEventListener("resize", () => {
+  const c = $("#unity-canvas");
+  if (c) { c.width = window.innerWidth; c.height = window.innerHeight; }
+});
+</script>
+</body>
+</html>

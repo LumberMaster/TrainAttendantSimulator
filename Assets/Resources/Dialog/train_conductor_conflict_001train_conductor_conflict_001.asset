@@ -1,0 +1,239 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8003a57573558cb4d8505d7a398c2a9e, type: 3}
+  m_Name: train_conductor_conflict_001train_conductor_conflict_001
+  m_EditorClassIdentifier: Assembly-CSharp::Game.DialogAsset
+  id: train_conductor_conflict_001
+  description: "\u0414\u0438\u0430\u043B\u043E\u0433 \u043F\u0440\u043E\u0432\u043E\u0434\u043D\u0438\u043A\u0430
+    \u0438 \u043D\u0435\u0430\u0434\u0435\u043A\u0432\u0430\u0442\u043D\u043E\u0433\u043E
+    \u043F\u0430\u0441\u0441\u0430\u0436\u0438\u0440\u0430. \u041E\u0442\u0432\u0435\u0442\u044B
+    \u043F\u0440\u043E\u0432\u043E\u0434\u043D\u0438\u043A\u0430 \u0432\u044B\u043D\u0435\u0441\u0435\u043D\u044B
+    \u0432 transitions. \u0420\u043E\u043B\u044C \u043F\u0440\u043E\u0432\u043E\u0434\u043D\u0438\u043A\u0430
+    \u2014 Player, \u043F\u0430\u0441\u0441\u0430\u0436\u0438\u0440\u0430 \u2014
+    NPC_1. \u0412\u0441\u0435 \u043A\u043E\u043D\u0435\u0447\u043D\u044B\u0435 \u0440\u0435\u043F\u043B\u0438\u043A\u0438
+    \u0438\u043C\u0435\u044E\u0442 isEnd: true \u0438 \u043F\u0443\u0441\u0442\u044B\u0435
+    transitions, \u0447\u0442\u043E\u0431\u044B \u0434\u0438\u0430\u043B\u043E\u0433
+    \u0437\u0430\u0432\u0435\u0440\u0448\u0430\u043B\u0441\u044F \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u043E."
+  lines:
+  - id: line_1_npc_yell
+    roleId: NPC_1
+    text: "\u042D\u0439, \u043F\u0440\u043E\u0432\u043E\u0434\u043D\u0438\u043A!
+      \u0422\u044B \u0447\u0435\u0433\u043E \u0441\u0442\u043E\u0438\u0448\u044C?
+      \u041C\u043E\u0439 \u0431\u0430\u0433\u0430\u0436 \u043C\u0435\u0448\u0430\u0435\u0442,
+      \u043D\u0435\u043C\u0435\u0434\u043B\u0435\u043D\u043D\u043E \u0443\u0431\u0435\u0440\u0438
+      \u0435\u0433\u043E, \u0438\u043D\u0430\u0447\u0435 \u044F \u0432\u044B\u0437\u043E\u0432\u0443
+      \u043F\u043E\u043B\u0438\u0446\u0438\u044E! \u0422\u044B \u0432\u043E\u043E\u0431\u0449\u0435
+      \u043D\u0435\u0430\u0434\u0435\u043A\u0432\u0430\u0442\u043D\u044B\u0439!"
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 0
+    useTimer: 0
+    timerDuration: 0
+    transitions:
+    - choiceText: "\u041F\u0440\u043E\u0448\u0443 \u043F\u0440\u043E\u0449\u0435\u043D\u0438\u044F.
+        \u0421\u0435\u0439\u0447\u0430\u0441 \u044F \u0430\u043A\u043A\u0443\u0440\u0430\u0442\u043D\u043E
+        \u043F\u043E\u043C\u043E\u0433\u0443 \u0432\u0430\u043C \u043F\u0435\u0440\u0435\u0441\u0442\u0430\u0432\u0438\u0442\u044C
+        \u0431\u0430\u0433\u0430\u0436. \u041F\u043E\u0434\u0441\u043A\u0430\u0436\u0438\u0442\u0435,
+        \u043A\u0443\u0434\u0430 \u0435\u0433\u043E \u043B\u0443\u0447\u0448\u0435
+        \u043F\u043E\u0441\u0442\u0430\u0432\u0438\u0442\u044C?"
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_2_npc_cultural_reaction
+    - choiceText: "\u0423\u0441\u043F\u043E\u043A\u043E\u0439\u0442\u0435\u0441\u044C,
+        \u0438\u043D\u0430\u0447\u0435 \u044F \u0432\u044B\u043D\u0443\u0436\u0434\u0435\u043D
+        \u0431\u0443\u0434\u0443 \u0432\u044B\u0437\u0432\u0430\u0442\u044C \u043D\u0430\u0440\u044F\u0434
+        \u043F\u043E\u043B\u0438\u0446\u0438\u0438."
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_3_npc_uncultural_reaction
+    - choiceText: "\u041D\u0435\u043C\u0435\u0434\u043B\u0435\u043D\u043D\u043E \u043F\u0440\u0435\u043A\u0440\u0430\u0442\u0438\u0442\u0435
+        \u043A\u0440\u0438\u0447\u0430\u0442\u044C! \u042D\u0442\u043E \u0432\u0430\u0433\u043E\u043D,
+        \u0430 \u043D\u0435 \u0431\u0430\u0437\u0430\u0440!"
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_4_npc_urgent_reaction
+  - id: line_2_npc_cultural_reaction
+    roleId: NPC_1
+    text: "\u041B\u0430\u0434\u043D\u043E, \u043F\u043E\u043C\u043E\u0433\u0438\u0442\u0435.
+      \u041D\u043E \u0435\u0441\u043B\u0438 \u0447\u0442\u043E, \u044F \u0432\u0441\u0451
+      \u0440\u0430\u0432\u043D\u043E \u043D\u0430\u043F\u0438\u0448\u0443 \u0436\u0430\u043B\u043E\u0431\u0443."
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 0
+    useTimer: 0
+    timerDuration: 0
+    transitions:
+    - choiceText: "\u041A\u043E\u043D\u0435\u0447\u043D\u043E. \u042F \u0441\u0434\u0435\u043B\u0430\u044E
+        \u0432\u0441\u0451 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0435,
+        \u0447\u0442\u043E\u0431\u044B \u043F\u043E\u0435\u0437\u0434\u043A\u0430
+        \u0431\u044B\u043B\u0430 \u043A\u043E\u043C\u0444\u043E\u0440\u0442\u043D\u043E\u0439."
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_5_npc_final_cultural_1
+    - choiceText: "\u041F\u0438\u0448\u0438\u0442\u0435, \u043A\u0443\u0434\u0430
+        \u0445\u043E\u0442\u0438\u0442\u0435. \u041C\u043D\u0435 \u0433\u043B\u0430\u0432\u043D\u043E\u0435
+        \u2014 \u043F\u043E\u0440\u044F\u0434\u043E\u043A \u0432 \u0432\u0430\u0433\u043E\u043D\u0435."
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_6_npc_final_cultural_2
+    - choiceText: "\u0416\u0430\u043B\u043E\u0431\u0430 \u2014 \u0432\u0430\u0448\u0435
+        \u043F\u0440\u0430\u0432\u043E. \u041D\u043E \u0441\u0435\u0439\u0447\u0430\u0441
+        \u0434\u0430\u0432\u0430\u0439\u0442\u0435 \u0440\u0435\u0448\u0438\u043C
+        \u0432\u043E\u043F\u0440\u043E\u0441 \u0441 \u0431\u0430\u0433\u0430\u0436\u043E\u043C."
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_7_npc_final_cultural_3
+  - id: line_3_npc_uncultural_reaction
+    roleId: NPC_1
+    text: "\u0414\u0430 \u0442\u044B \u0432\u043E\u043E\u0431\u0449\u0435 \u043A\u0442\u043E
+      \u0442\u0430\u043A\u043E\u0439? \u042F \u043D\u0430 \u0442\u0435\u0431\u044F
+      \u0443\u043F\u0440\u0430\u0432\u0443 \u043D\u0430\u0439\u0434\u0443!"
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 0
+    useTimer: 0
+    timerDuration: 0
+    transitions:
+    - choiceText: "\u042F \u043F\u0440\u043E\u0432\u043E\u0434\u043D\u0438\u043A
+        \u044D\u0442\u043E\u0433\u043E \u0432\u0430\u0433\u043E\u043D\u0430. \u0414\u0430\u0432\u0430\u0439\u0442\u0435
+        \u043D\u0435 \u0431\u0443\u0434\u0435\u043C \u0440\u0443\u0433\u0430\u0442\u044C\u0441\u044F,
+        \u044F \u0433\u043E\u0442\u043E\u0432 \u043F\u043E\u043C\u043E\u0447\u044C."
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_8_npc_final_uncultural_1
+    - choiceText: "\u0423\u043F\u0440\u0430\u0432\u0443 \u043E\u043D \u043D\u0430\u0439\u0434\u0451\u0442.
+        \u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043D\u0430\u0443\u0447\u0438\u0442\u0435\u0441\u044C
+        \u0432\u0435\u0441\u0442\u0438 \u0441\u0435\u0431\u044F \u0432 \u043E\u0431\u0449\u0435\u0441\u0442\u0432\u0435\u043D\u043D\u043E\u043C
+        \u043C\u0435\u0441\u0442\u0435."
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_9_npc_final_uncultural_2
+    - choiceText: "\u041F\u0440\u0435\u043A\u0440\u0430\u0442\u0438\u0442\u0435 \u0443\u0433\u0440\u043E\u0437\u044B.
+        \u0418\u043D\u0430\u0447\u0435 \u044F \u0432\u044B\u0437\u044B\u0432\u0430\u044E
+        \u043D\u0430\u0447\u0430\u043B\u044C\u043D\u0438\u043A\u0430 \u043F\u043E\u0435\u0437\u0434\u0430."
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_10_npc_final_uncultural_3
+  - id: line_4_npc_urgent_reaction
+    roleId: NPC_1
+    text: "\u0422\u043E\u043B\u044C\u043A\u043E \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439!
+      \u042F \u0442\u043E\u0433\u0434\u0430 \u0432\u0441\u0451 \u0437\u0434\u0435\u0441\u044C
+      \u0440\u0430\u0437\u043D\u0435\u0441\u0443!"
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 0
+    useTimer: 0
+    timerDuration: 0
+    transitions:
+    - choiceText: "\u041F\u0440\u043E\u0448\u0443 \u0432\u0430\u0441, \u0443\u0441\u043F\u043E\u043A\u043E\u0439\u0442\u0435\u0441\u044C.
+        \u0414\u0430\u0432\u0430\u0439\u0442\u0435 \u0440\u0435\u0448\u0438\u043C
+        \u0432\u043E\u043F\u0440\u043E\u0441 \u043C\u0438\u0440\u043D\u043E."
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_11_npc_final_urgent_1
+    - choiceText: "\u0420\u0430\u0437\u043D\u0435\u0441\u0442\u0438 \u043E\u043D
+        \u0441\u043E\u0431\u0440\u0430\u043B\u0441\u044F. \u041E\u0445\u0440\u0430\u043D\u0430,
+        \u0437\u0430\u0439\u0434\u0438\u0442\u0435 \u0432 \u0432\u0430\u0433\u043E\u043D."
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_12_npc_final_urgent_2
+    - choiceText: "\u042D\u0442\u043E \u0443\u0436\u0435 \u0443\u0433\u0440\u043E\u0437\u0430.
+        \u0412\u044B\u0437\u044B\u0432\u0430\u044E \u043D\u0430\u0440\u044F\u0434
+        \u043F\u043E\u043B\u0438\u0446\u0438\u0438."
+      speakerRoleId: Player
+      choiceAudio: {fileID: 0}
+      targetLineId: line_13_npc_final_urgent_3
+  - id: line_5_npc_final_cultural_1
+    roleId: NPC_1
+    text: "\u0425\u043E\u0440\u043E\u0448\u043E, \u0441\u043F\u0430\u0441\u0438\u0431\u043E."
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 1
+    useTimer: 0
+    timerDuration: 0
+    transitions: []
+  - id: line_6_npc_final_cultural_2
+    roleId: NPC_1
+    text: "\u041B\u0430\u0434\u043D\u043E, \u043D\u043E \u044F \u0437\u0430\u043F\u043E\u043C\u043D\u044E."
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 1
+    useTimer: 0
+    timerDuration: 0
+    transitions: []
+  - id: line_7_npc_final_cultural_3
+    roleId: NPC_1
+    text: "\u0414\u043E\u0433\u043E\u0432\u043E\u0440\u0438\u043B\u0438\u0441\u044C,
+      \u0434\u0430\u0432\u0430\u0439\u0442\u0435 \u0440\u0435\u0448\u0438\u043C."
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 1
+    useTimer: 0
+    timerDuration: 0
+    transitions: []
+  - id: line_8_npc_final_uncultural_1
+    roleId: NPC_1
+    text: "\u041B\u0430\u0434\u043D\u043E, \u043F\u043E\u043C\u043E\u0433\u0430\u0439\u0442\u0435."
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 1
+    useTimer: 0
+    timerDuration: 0
+    transitions: []
+  - id: line_9_npc_final_uncultural_2
+    roleId: NPC_1
+    text: "\u0415\u0449\u0451 \u043F\u043E\u0441\u043C\u043E\u0442\u0440\u0438\u043C,
+      \u043A\u0442\u043E \u043F\u0440\u0430\u0432."
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 1
+    useTimer: 0
+    timerDuration: 0
+    transitions: []
+  - id: line_10_npc_final_uncultural_3
+    roleId: NPC_1
+    text: "\u0412\u044B\u0437\u044B\u0432\u0430\u0439\u0442\u0435, \u044F \u043F\u043E\u0434\u043E\u0436\u0434\u0443."
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 1
+    useTimer: 0
+    timerDuration: 0
+    transitions: []
+  - id: line_11_npc_final_urgent_1
+    roleId: NPC_1
+    text: "\u041B\u0430\u0434\u043D\u043E, \u0443\u0441\u043F\u043E\u043A\u043E\u0439\u0442\u0435\u0441\u044C
+      \u0432\u044B."
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 1
+    useTimer: 0
+    timerDuration: 0
+    transitions: []
+  - id: line_12_npc_final_urgent_2
+    roleId: NPC_1
+    text: "\u041E\u0445\u0440\u0430\u043D\u0430, \u043E\u0445\u0440\u0430\u043D\u0430...
+      \u043D\u0443 \u0438 \u043B\u0430\u0434\u043D\u043E."
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 1
+    useTimer: 0
+    timerDuration: 0
+    transitions: []
+  - id: line_13_npc_final_urgent_3
+    roleId: NPC_1
+    text: "\u041F\u043E\u043B\u0438\u0446\u0438\u044F? \u041D\u0443 \u0432\u044B\u0437\u043E\u0432\u0438\u0442\u0435."
+    audio: {fileID: 0}
+    fallbackDuration: 0
+    isEnd: 1
+    useTimer: 0
+    timerDuration: 0
+    transitions: []

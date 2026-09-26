@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5fb5a275a574fd449b811ac1257bd26, type: 3}
+  m_Name: Scenario_1
+  m_EditorClassIdentifier: Assembly-CSharp::Game.Scenario
+  uuid: 007d2d00-5dcb-402c-a4ae-1591b27ea092
+  scenarioName: 
+  description: 
+  stages:
+  - stageName: 
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    transitions:
+    - ScenarioUnitName: 
+      ScenarioMessage: 
+      ScenarioNextStage: 
+      onTransitMessages:
+      - ScenarioUnitName: 
+        ScenarioMessage: 
+    onStartStageMessages: []
+    onEndStageMessages: []
+  - stageName: 
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    transitions: []
+    onStartStageMessages: []
+    onEndStageMessages: []
+  - stageName: 
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    transitions: []
+    onStartStageMessages: []
+    onEndStageMessages: []
+  - stageName: 
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    transitions: []
+    onStartStageMessages: []
+    onEndStageMessages: []
+  - stageName: 
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    transitions: []
+    onStartStageMessages: []
+    onEndStageMessages: []
+  - stageName: 
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    transitions: []
+    onStartStageMessages: []
+    onEndStageMessages: []
+  - stageName: 
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    transitions: []
+    onStartStageMessages: []
+    onEndStageMessages: []
+  - stageName: 
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    transitions: []
+    onStartStageMessages: []
+    onEndStageMessages: []
+  - stageName: 
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    transitions: []
+    onStartStageMessages: []
+    onEndStageMessages: []
+  - stageName: 
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    transitions:
+    - ScenarioUnitName: 
+      ScenarioMessage: 
+      ScenarioNextStage: 
+      onTransitMessages:
+      - ScenarioUnitName: 
+        ScenarioMessage: 
+    onStartStageMessages:
+    - ScenarioUnitName: 
+      ScenarioMessage: 
+    onEndStageMessages:
+    - ScenarioUnitName: 
+      ScenarioMessage: 
+  onStartScenarioMessages:
+  - ScenarioUnitName: 
+    ScenarioMessage: 
+  onEndScenarioMessages:
+  - ScenarioUnitName: 
+    ScenarioMessage: 

@@ -60,15 +60,12 @@ public class PlayerInteractor : MonoBehaviour
 
     private void OnInteractPerformed(InputAction.CallbackContext ctx)
     {
-        Debug.Log("Press E");
 
         if (currentTarget == null) return;
 
         // Звук взаимодействия
         if (audioSource != null && interactSound != null)
             audioSource.PlayOneShot(interactSound, interactSoundVolume);
-
-        Debug.Log("Press E");
 
         currentTarget.OnInteract();
         onInteract?.Invoke(currentTarget);

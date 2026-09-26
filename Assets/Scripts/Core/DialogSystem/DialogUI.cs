@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -28,7 +29,28 @@ namespace Game
         [Header("Options")]
         [SerializeField] private bool hideWhenNoPortrait = true;
 
+        [Header("Typewriter")]
+        [Tooltip("Сколько символов в секунду печатается. 0 или меньше — без анимации.")]
+        [SerializeField] private float charactersPerSecond = 40f;
+        [Tooltip("Пауза после символов . ! ? … (в секундах). 0 — отключено.")]
+        [SerializeField] private float punctuationPause = 0.15f;
+        [Tooltip("Также печатать имя посимвольно.")]
+        [SerializeField] private bool animateName = false;
+
+        [Header("Portrait")]
+        [Tooltip("RawImage, в который выводится портрет текущего говорящего.")]
+        [SerializeField] private RawImage portraitRawImage;
+
         private readonly List<DialogChoiceButton> _spawnedChoices = new List<DialogChoiceButton>();
+
+        private Coroutine _typeLineRoutine;
+        private Coroutine _typeNameRoutine;
+
+        /// <summary>true, пока идёт печать текста.</summary>
+        public bool IsTyping { get; private set; }
+
+        /// <summary>Вызывается, когда печать реплики завершена (или была прервана/пропущена).</summary>
+        public event Action LineTypingCompleted;
 
         private void Awake() => Hide();
 
@@ -46,6 +68,8 @@ namespace Game
 
         public void Hide()
         {
+            StopTyping(false);
+
             if (panel != null)
             {
                 panel.alpha = 0f;
@@ -71,29 +95,177 @@ namespace Game
         /// <summary>Имя берём из БД — по roleId реплики.</summary>
         public void SetLine(DialogRole role, DialogLine line)
         {
+            // Имя
             if (nameText != null)
             {
-                Debug.Log(role.displayName);
                 if (role != null)
                 {
-                    nameText.text = role.displayName;
                     nameText.color = role.nameColor;
+
+                    if (animateName)
+                        StartNameTyping(role.displayName);
+                    else
+                        nameText.text = role.displayName;
                 }
                 else
                 {
+                    StopNameTyping();
                     nameText.text = string.Empty;
                     nameText.color = Color.white;
                 }
             }
 
-            if (lineText != null)
-                lineText.text = line != null ? line.text : string.Empty;
-
+            // Портрет
             if (portrait != null)
             {
                 portrait.sprite = role != null ? role.portrait : null;
                 portrait.enabled = portrait.sprite != null || !hideWhenNoPortrait;
             }
+
+            // Текст реплики
+            var text = line != null ? line.text : string.Empty;
+            StartLineTyping(text);
+        }
+
+        /// <summary>
+        /// Мгновенно завершает печать (например, при клике «далее»).
+        /// Возвращает true, если что-то было пропущено.
+        /// </summary>
+        public bool CompleteTyping()
+        {
+            if (!IsTyping) return false;
+
+            var full = _lineFullText;
+            StopTyping(false);
+
+            if (lineText != null) lineText.text = full;
+            if (nameText != null && animateName) nameText.text = _nameFullText;
+
+            LineTypingCompleted?.Invoke();
+            return true;
+        }
+
+        // ---------- Typewriter internals ----------
+
+        private string _lineFullText = string.Empty;
+        private string _nameFullText = string.Empty;
+
+        private void StartLineTyping(string text)
+        {
+            StopLineTyping();
+            _lineFullText = text ?? string.Empty;
+
+            if (lineText == null) return;
+
+            if (charactersPerSecond <= 0f || string.IsNullOrEmpty(_lineFullText))
+            {
+                lineText.text = _lineFullText;
+                IsTyping = false;
+                LineTypingCompleted?.Invoke();
+                return;
+            }
+
+            // maxVisibleCharacters работает быстро и не создаёт мусор в строках.
+            lineText.text = _lineFullText;
+            lineText.maxVisibleCharacters = 0;
+            lineText.ForceMeshUpdate();
+
+            _typeLineRoutine = StartCoroutine(TypeLineRoutine());
+        }
+
+        private IEnumerator TypeLineRoutine()
+        {
+            IsTyping = true;
+
+            int total = lineText.textInfo.characterCount;
+            float delay = 1f / charactersPerSecond;
+
+            for (int i = 1; i <= total; i++)
+            {
+                lineText.maxVisibleCharacters = i;
+
+                // Пауза после знаков препинания
+                if (punctuationPause > 0f)
+                {
+                    char c = lineText.textInfo.characterInfo[i - 1].character;
+                    if (c == '.' || c == '!' || c == '?' || c == '…' || c == ',' || c == ';' || c == ':')
+                    {
+                        yield return new WaitForSeconds(delay + punctuationPause);
+                        continue;
+                    }
+                }
+
+                yield return new WaitForSeconds(delay);
+            }
+
+            lineText.maxVisibleCharacters = total;
+            _typeLineRoutine = null;
+            IsTyping = false;
+            LineTypingCompleted?.Invoke();
+        }
+
+        private void StopLineTyping()
+        {
+            if (_typeLineRoutine != null)
+            {
+                StopCoroutine(_typeLineRoutine);
+                _typeLineRoutine = null;
+            }
+            IsTyping = false;
+        }
+
+        private void StopTyping(bool invokeCompleted)
+        {
+            StopLineTyping();
+            StopNameTyping();
+            if (invokeCompleted) LineTypingCompleted?.Invoke();
+        }
+
+        private void StartNameTyping(string text)
+        {
+            StopNameTyping();
+            _nameFullText = text ?? string.Empty;
+
+            if (nameText == null) return;
+
+            if (charactersPerSecond <= 0f || string.IsNullOrEmpty(_nameFullText))
+            {
+                nameText.text = _nameFullText;
+                return;
+            }
+
+            nameText.text = _nameFullText;
+            nameText.maxVisibleCharacters = 0;
+            nameText.ForceMeshUpdate();
+
+            _typeNameRoutine = StartCoroutine(TypeNameRoutine());
+        }
+
+        private IEnumerator TypeNameRoutine()
+        {
+            int total = nameText.textInfo.characterCount;
+            float delay = 1f / charactersPerSecond;
+
+            for (int i = 1; i <= total; i++)
+            {
+                nameText.maxVisibleCharacters = i;
+                yield return new WaitForSeconds(delay);
+            }
+
+            nameText.maxVisibleCharacters = total;
+            _typeNameRoutine = null;
+        }
+
+        private void StopNameTyping()
+        {
+            if (_typeNameRoutine != null)
+            {
+                StopCoroutine(_typeNameRoutine);
+                _typeNameRoutine = null;
+            }
+
+            if (nameText != null)
+                nameText.maxVisibleCharacters = int.MaxValue;
         }
 
         // ---------- Choices ----------
@@ -149,6 +321,18 @@ namespace Game
             if (!timerText.gameObject.activeSelf) return;
 
             timerText.text = Mathf.Max(0, Mathf.CeilToInt(remaining)).ToString();
+        }
+
+        // ---------- Portrait ----------
+
+        /// <summary>
+        /// Устанавливает текстуру портрета. Передайте null, чтобы скрыть портрет.
+        /// </summary>
+        public void SetRenderTexture(RenderTexture renderTexture)
+        {
+            if (portraitRawImage == null) return;
+            portraitRawImage.texture = renderTexture;
+            portraitRawImage.enabled = renderTexture != null;
         }
     }
 }

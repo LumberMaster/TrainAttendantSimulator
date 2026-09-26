@@ -535,6 +535,7 @@ MonoBehaviour:
   choicesContainer: {fileID: 1155037558315234457}
   timerText: {fileID: 3581437873643498325}
   hideWhenNoPortrait: 0
+  portraitRawImage: {fileID: 1891256722127062685}
 --- !u!1 &4714261305673650049
 GameObject:
   m_ObjectHideFlags: 0

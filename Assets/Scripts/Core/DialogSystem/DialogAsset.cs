@@ -33,7 +33,6 @@ namespace Game
             return -1;
         }
 
-
 #if UNITY_EDITOR
         // =====================================================================
         //  EDITOR-ONLY: JSON export / import
@@ -81,7 +80,7 @@ namespace Game
                         text = l.text,
                         audioPath = l.audio != null ? AssetDatabase.GetAssetPath(l.audio) : string.Empty,
                         fallbackDuration = l.fallbackDuration,
-                        isEnd = l.isEnd,                    // <-- новое
+                        isEnd = l.isEnd,
                         useTimer = l.useTimer,
                         timerDuration = l.timerDuration,
                         transitions = new List<DialogLineTransitionJsonData>()
@@ -93,15 +92,31 @@ namespace Game
                         {
                             if (t == null) continue;
 
-                            lineData.transitions.Add(new DialogLineTransitionJsonData
+                            var trData = new DialogLineTransitionJsonData
                             {
                                 choiceText = t.choiceText,
                                 speakerRoleId = t.speakerRoleId,
                                 choiceAudioPath = t.choiceAudio != null
                                     ? AssetDatabase.GetAssetPath(t.choiceAudio)
                                     : string.Empty,
-                                targetLineId = t.targetLineId
-                            });
+                                targetLineId = t.targetLineId,
+                                parameters = new List<DialogLineParameterJsonData>()
+                            };
+
+                            if (t.parameters != null)
+                            {
+                                foreach (var p in t.parameters)
+                                {
+                                    if (p == null) continue;
+                                    trData.parameters.Add(new DialogLineParameterJsonData
+                                    {
+                                        name = p.name,
+                                        value = p.value
+                                    });
+                                }
+                            }
+
+                            lineData.transitions.Add(trData);
                         }
                     }
 
@@ -130,10 +145,10 @@ namespace Game
                         roleId = l.roleId,
                         text = l.text,
                         audio = string.IsNullOrEmpty(l.audioPath)
-                        ? null
-                        : AssetDatabase.LoadAssetAtPath<AudioClip>(l.audioPath),
+                            ? null
+                            : AssetDatabase.LoadAssetAtPath<AudioClip>(l.audioPath),
                         fallbackDuration = l.fallbackDuration,
-                        isEnd = l.isEnd,                    // <-- новое
+                        isEnd = l.isEnd,
                         useTimer = l.useTimer,
                         timerDuration = l.timerDuration,
                         transitions = new List<DialogLineTransition>()
@@ -145,15 +160,31 @@ namespace Game
                         {
                             if (t == null) continue;
 
-                            line.transitions.Add(new DialogLineTransition
+                            var tr = new DialogLineTransition
                             {
                                 choiceText = t.choiceText,
                                 speakerRoleId = t.speakerRoleId,
                                 choiceAudio = string.IsNullOrEmpty(t.choiceAudioPath)
                                     ? null
                                     : AssetDatabase.LoadAssetAtPath<AudioClip>(t.choiceAudioPath),
-                                targetLineId = t.targetLineId
-                            });
+                                targetLineId = t.targetLineId,
+                                parameters = new List<DialogLineParameter>()
+                            };
+
+                            if (t.parameters != null)
+                            {
+                                foreach (var p in t.parameters)
+                                {
+                                    if (p == null) continue;
+                                    tr.parameters.Add(new DialogLineParameter
+                                    {
+                                        name = p.name,
+                                        value = p.value
+                                    });
+                                }
+                            }
+
+                            line.transitions.Add(tr);
                         }
                     }
 
@@ -163,7 +194,6 @@ namespace Game
         }
 #endif
     }
-
 
     [Serializable]
     public class DialogLine
@@ -191,10 +221,23 @@ namespace Game
         [Tooltip("Длительность таймера (сек). По истечении выберется первый переход.")]
         public float timerDuration = 5f;
 
+        // Параметры убраны — теперь они живут в DialogLineTransition.
+
         [Header("Transitions / Choices")]
         [Tooltip("Список вариантов ответа. Если пуст — переход к следующей реплике по индексу.")]
         public List<DialogLineTransition> transitions = new List<DialogLineTransition>();
     }
+
+    [Serializable]
+    public class DialogLineParameter
+    {
+        [Tooltip("Имя параметра (например, 'trust', 'anger', 'reputation').")]
+        public string name;
+
+        [Tooltip("Сколько очков добавляется к параметру при выборе этого ответа.")]
+        public float value;
+    }
+
     [Serializable]
     public class DialogLineTransition
     {
@@ -209,8 +252,11 @@ namespace Game
 
         [Tooltip("id следующей реплики в этом же диалоге.")]
         public string targetLineId;
-    }
 
+        [Header("Parameters (очки за выбор)")]
+        [Tooltip("Список параметров, к которым добавляются очки при выборе этого ответа.")]
+        public List<DialogLineParameter> parameters = new List<DialogLineParameter>();
+    }
 
     // =========================================================================
     //  JSON DTOs
@@ -232,10 +278,17 @@ namespace Game
         public string text;
         public string audioPath;
         public float fallbackDuration = 2f;
-        public bool isEnd;                 // <-- новое
+        public bool isEnd;
         public bool useTimer;
         public float timerDuration = 5f;
         public List<DialogLineTransitionJsonData> transitions = new List<DialogLineTransitionJsonData>();
+    }
+
+    [Serializable]
+    public class DialogLineParameterJsonData
+    {
+        public string name;
+        public float value;
     }
 
     [Serializable]
@@ -245,8 +298,8 @@ namespace Game
         public string speakerRoleId;
         public string choiceAudioPath;
         public string targetLineId;
+        public List<DialogLineParameterJsonData> parameters = new List<DialogLineParameterJsonData>();
     }
-
 
 #if UNITY_EDITOR
     [CustomEditor(typeof(DialogAsset))]

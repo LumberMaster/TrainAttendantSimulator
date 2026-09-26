@@ -22,6 +22,14 @@ namespace Game
         [Tooltip("Показывать курсор во время выбора ответа и скрывать после.")]
         [SerializeField] private bool showCursorDuringChoices = true;
 
+        [Header("Portrait Render")]
+        [Tooltip("RenderTexture, в которую рендерит камера текущего говорящего. Отображается в DialogUI.")]
+        [SerializeField] private RenderTexture dialogRenderTexture;
+
+        [Header("History")]
+        [Tooltip("Писать историю диалогов в DialogHistory (если он есть в сцене).")]
+        [SerializeField] private bool recordHistory = true;
+
         [Header("Events")]
         public UnityEvent<string> OnDialogStart = new UnityEvent<string>();
         public UnityEvent<string> OnDialogEnd = new UnityEvent<string>();
@@ -31,6 +39,7 @@ namespace Game
         public bool IsPlaying { get; private set; }
         public DialogSpeaker CurrentSpeaker { get; private set; }
         public DialogAsset CurrentDialog { get; private set; }
+        public RenderTexture DialogRenderTexture => dialogRenderTexture;
 
         private Coroutine _routine;
         private bool _skipRequested;
@@ -40,8 +49,15 @@ namespace Game
         private bool _savedCursorVisible;
         private CursorLockMode _savedCursorLockMode;
 
+        // --- Portrait / camera state ---
+        private Camera _swappedCamera;
+        private RenderTexture _swappedCameraOriginalTarget;
+
         private readonly Dictionary<ScenarioUnit, DialogSpeaker> _subscribedUnits =
             new Dictionary<ScenarioUnit, DialogSpeaker>();
+
+        private readonly Dictionary<string, DialogSpeaker> _speakersById =
+            new Dictionary<string, DialogSpeaker>();
 
         private void Awake()
         {
@@ -64,6 +80,7 @@ namespace Game
         private void OnDestroy()
         {
             RestoreCursor();
+            ClearActivePortrait();
             if (Instance == this) Instance = null;
         }
 
@@ -99,6 +116,7 @@ namespace Game
             ui?.SetTimerActive(false, 0f);
 
             RestoreCursor();
+            ClearActivePortrait();
 
             if (IsPlaying)
             {
@@ -106,6 +124,8 @@ namespace Game
                 OnDialogEnd.Invoke(id);
                 if (CurrentSpeaker != null && !string.IsNullOrEmpty(CurrentSpeaker.OnDialogEndMessage))
                     SendScenarioMessage(CurrentSpeaker, CurrentSpeaker.OnDialogEndMessage);
+
+                if (recordHistory) DialogHistory.Instance?.EndDialog();
             }
 
             IsPlaying = false;
@@ -119,6 +139,12 @@ namespace Game
             _skipRequested = true;
             if (CurrentSpeaker != null && CurrentSpeaker.AudioSource != null)
                 CurrentSpeaker.AudioSource.Stop();
+        }
+
+        public DialogSpeaker GetSpeakerById(string speakerId)
+        {
+            if (string.IsNullOrEmpty(speakerId)) return null;
+            return _speakersById.TryGetValue(speakerId, out var s) ? s : null;
         }
 
         public void SubscribeToAllUnits()
@@ -136,6 +162,9 @@ namespace Game
 
             unit.OnMessageReceived += HandleUnitMessage;
             _subscribedUnits.Add(unit, speaker);
+
+            if (!string.IsNullOrEmpty(speaker.SpeakerId))
+                _speakersById[speaker.SpeakerId] = speaker;
         }
 
         public void UnsubscribeFromAllUnits()
@@ -145,6 +174,7 @@ namespace Game
                     kv.Key.OnMessageReceived -= HandleUnitMessage;
 
             _subscribedUnits.Clear();
+            _speakersById.Clear();
         }
 
         // ---------- Внутреннее ----------
@@ -170,6 +200,9 @@ namespace Game
             if (sendMessagesToScenario && speaker != null && !string.IsNullOrEmpty(speaker.OnDialogStartMessage))
                 SendScenarioMessage(speaker, speaker.OnDialogStartMessage);
 
+            if (recordHistory)
+                DialogHistory.Instance?.BeginDialog(dialog.id, speaker != null ? speaker.SpeakerId : null);
+
             var source = speaker != null ? speaker.AudioSource : null;
             int index = 0;
 
@@ -180,12 +213,19 @@ namespace Game
                 var line = dialog.lines[index];
                 if (line == null) { index++; continue; }
 
+                // Портрет — по roleId реплики
+                SetActivePortraitForRole(line.roleId);
+
                 var role = database.GetRole(line.roleId);
                 ui?.SetLine(role, line);
                 OnDialogLine.Invoke(role, line);
 
+                // === Запись реплики в историю (без параметров — они теперь на переходах) ===
+                if (recordHistory)
+                    DialogHistory.Instance?.RecordLine(dialog.id, line);
+
                 yield return PlayLineAudio(source, line);
-                if (!IsPlaying) { RestoreCursor(); yield break; }
+                if (!IsPlaying) { RestoreCursor(); ClearActivePortrait(); yield break; }
 
                 // === Конец диалога на этой реплике ===
                 if (line.isEnd)
@@ -198,7 +238,6 @@ namespace Game
                     int chosenIndex = -1;
                     bool chosen = false;
 
-                    // === Показ выбора: включаем курсор ===
                     ShowCursor();
 
                     ui?.ShowChoices(line.transitions, i => { chosenIndex = i; chosen = true; });
@@ -226,7 +265,6 @@ namespace Game
                     ui?.HideChoices();
                     ui?.SetTimerActive(false, 0f);
 
-                    // === Выбор сделан: возвращаем курсор в исходное состояние ===
                     RestoreCursor();
 
                     if (!IsPlaying) yield break;
@@ -242,6 +280,8 @@ namespace Game
                             ? tr.speakerRoleId
                             : defaultPlayerRoleId;
 
+                        SetActivePortraitForRole(roleId);
+
                         var choiceLine = new DialogLine
                         {
                             id = "__choice__",
@@ -255,8 +295,29 @@ namespace Game
                         ui?.SetLine(choiceRole, choiceLine);
                         OnDialogLine.Invoke(choiceRole, choiceLine);
 
+                        // === Запись выбранного варианта: очки берём из перехода ===
+                        if (recordHistory)
+                            DialogHistory.Instance?.RecordLine(
+                                dialog.id, choiceLine,
+                                isChoice: true,
+                                selectedChoiceText: tr.choiceText,
+                                targetLineId: tr.targetLineId,
+                                parameters: tr.parameters);
+
                         yield return PlayLineAudio(source, choiceLine);
                         if (!IsPlaying) yield break;
+                    }
+                    else
+                    {
+                        // Даже если нет текста/аудио — очки за выбор всё равно должны быть записаны.
+                        if (recordHistory)
+                            DialogHistory.Instance?.RecordLine(
+                                dialog.id,
+                                new DialogLine { id = "__choice__", roleId = null, text = string.Empty },
+                                isChoice: true,
+                                selectedChoiceText: tr.choiceText,
+                                targetLineId: tr.targetLineId,
+                                parameters: tr.parameters);
                     }
 
                     int targetIdx = dialog.IndexOfLine(tr.targetLineId);
@@ -276,10 +337,13 @@ namespace Game
             ui?.SetTimerActive(false, 0f);
 
             RestoreCursor();
+            ClearActivePortrait();
 
             OnDialogEnd.Invoke(dialog.id);
             if (speaker != null && !string.IsNullOrEmpty(speaker.OnDialogEndMessage))
                 SendScenarioMessage(speaker, speaker.OnDialogEndMessage);
+
+            if (recordHistory) DialogHistory.Instance?.EndDialog();
 
             CurrentSpeaker = null;
             CurrentDialog = null;
@@ -322,6 +386,54 @@ namespace Game
 
             ScenarioSystem.Instance.RecieveMessage(
                 new ScenarioMessage(speaker.UnitName, message));
+        }
+
+        // ---------- Портрет / камера ----------
+
+        private void SetActivePortraitForRole(string roleId)
+        {
+            DialogSpeaker speaker = GetSpeakerById(roleId);
+            Camera cam = speaker != null ? speaker.SpeakerCamera : null;
+
+            if (cam != null && cam == Camera.main)
+            {
+                Debug.LogWarning(
+                    $"[DialogSystem] Спикер '{roleId}' назначил Camera.main как портретную камеру. " +
+                    "Портрет будет скрыт, основная камера не изменяется. " +
+                    "Назначьте DialogSpeaker.speakerCamera отдельную камеру.");
+                cam = null;
+            }
+
+            if (cam == _swappedCamera) return;
+
+            if (_swappedCamera != null)
+                _swappedCamera.targetTexture = _swappedCameraOriginalTarget;
+
+            _swappedCamera = cam;
+            _swappedCameraOriginalTarget = null;
+
+            if (cam != null && dialogRenderTexture != null)
+            {
+                _swappedCameraOriginalTarget = cam.targetTexture;
+                cam.targetTexture = dialogRenderTexture;
+                ui?.SetRenderTexture(dialogRenderTexture);
+            }
+            else
+            {
+                ui?.SetRenderTexture(null);
+            }
+        }
+
+        private void ClearActivePortrait()
+        {
+            if (_swappedCamera != null)
+            {
+                _swappedCamera.targetTexture = _swappedCameraOriginalTarget;
+                _swappedCamera = null;
+                _swappedCameraOriginalTarget = null;
+            }
+
+            ui?.SetRenderTexture(null);
         }
 
         // ---------- Курсор ----------

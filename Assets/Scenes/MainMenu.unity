@@ -379,7 +379,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 51460e530f39cb140a8cc429fdb3ebd9, type: 2}
   _currentScenario: {fileID: 11400000, guid: 51460e530f39cb140a8cc429fdb3ebd9, type: 2}
   Source: {fileID: 305634117}
-  <IsDebug>k__BackingField: 0
+  <IsDebug>k__BackingField: 1
   OnStartScenario:
     m_PersistentCalls:
       m_Calls: []
@@ -513,6 +513,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4810146401139228279, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
   m_PrefabInstance: {fileID: 981041980773911745}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &335224729 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5699272885173962215, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+  m_PrefabInstance: {fileID: 981041980773911745}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 168e40c73fd318644864e45fd63e8ec4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.ScenarioUnit
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1488,6 +1499,134 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1968172506
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1968172507}
+  - component: {fileID: 1968172510}
+  - component: {fileID: 1968172508}
+  m_Layer: 0
+  m_Name: CameraRenderTextureNPC
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1968172507
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1968172506}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
+  m_LocalPosition: {x: -0.017, y: 1.651, z: 0.465}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5508136142869986886}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+--- !u!114 &1968172508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1968172506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 1
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
+--- !u!20 &1968172510
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1968172506}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.1
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
 --- !u!1 &1977304786
 GameObject:
   m_ObjectHideFlags: 0
@@ -1499,6 +1638,7 @@ GameObject:
   - component: {fileID: 1977304787}
   - component: {fileID: 1977304789}
   - component: {fileID: 1977304788}
+  - component: {fileID: 1977304790}
   m_Layer: 0
   m_Name: DialogSystem
   m_TagString: Untagged
@@ -1553,6 +1693,8 @@ MonoBehaviour:
   autoSubscribeToUnits: 1
   defaultPlayerRoleId: 
   showCursorDuringChoices: 1
+  dialogRenderTexture: {fileID: 8400000, guid: 05b37b1e5fce45045bb91399b8123d5e, type: 2}
+  recordHistory: 1
   OnDialogStart:
     m_PersistentCalls:
       m_Calls: []
@@ -1562,6 +1704,23 @@ MonoBehaviour:
   OnDialogLine:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1977304790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1977304786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11c60f5c93aead145809adc9dbdac608, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.DialogHistory
+  persistAcrossSessions: 0
+  usePlayerPrefs: 0
+  playerPrefsKey: DialogHistory
+  filePath: dialog_history.json
+  logRecordedLines: 1
 --- !u!1 &2000008317
 GameObject:
   m_ObjectHideFlags: 0
@@ -1572,8 +1731,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2000008318}
   - component: {fileID: 2000008321}
-  - component: {fileID: 2000008320}
   - component: {fileID: 2000008319}
+  - component: {fileID: 2000008323}
+  - component: {fileID: 2000008322}
   m_Layer: 0
   m_Name: CameraRenderTexture
   m_TagString: Untagged
@@ -1619,7 +1779,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -1640,14 +1800,6 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!81 &2000008320
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2000008317}
-  m_Enabled: 1
 --- !u!20 &2000008321
 Camera:
   m_ObjectHideFlags: 0
@@ -1699,6 +1851,121 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!114 &2000008322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000008317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7857d39f7ea71b74da9b6fa8618bbd5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Game.DialogSpeaker
+  speakerId: Player
+  audioSource: {fileID: 2000008323}
+  scenarioUnit: {fileID: 335224729}
+  speakerCamera: {fileID: 2000008321}
+  onDialogEndMessage: DialogEnd
+  onDialogStartMessage: DialogStart
+--- !u!82 &2000008323
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000008317}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!114 &2003411861 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4449258359988862260, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
@@ -2137,6 +2404,10 @@ PrefabInstance:
       propertyPath: animator
       value: 
       objectReference: {fileID: 919132148982301073}
+    - target: {fileID: 4140366027050610504, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_Depth
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 4676796965781768579, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
       propertyPath: m_Controller
       value: 
@@ -3055,7 +3326,7 @@ MonoBehaviour:
           m_StringArgument: train_conductor_forgot_passport_002
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 866270647}
+      - m_Target: {fileID: 2705665013157788996}
         m_TargetAssemblyTypeName: InteractableObject, Assembly-CSharp
         m_MethodName: SetInteractEnabled
         m_Mode: 6
@@ -3067,7 +3338,7 @@ MonoBehaviour:
           m_StringArgument: train_conductor_forgot_passport_002
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 866270647}
+      - m_Target: {fileID: 2705665013157788996}
         m_TargetAssemblyTypeName: InteractableObject, Assembly-CSharp
         m_MethodName: SetFocusEnabled
         m_Mode: 6
@@ -3534,7 +3805,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 168e40c73fd318644864e45fd63e8ec4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.ScenarioUnit
-  scenarioUnitName: NPC_1
+  scenarioUnitName: NPC_2
   messageHandlers: []
 --- !u!1 &3944626699610459432
 GameObject:
@@ -3943,8 +4214,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7857d39f7ea71b74da9b6fa8618bbd5d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.DialogSpeaker
+  speakerId: NPC_2
   audioSource: {fileID: 7327276664175223317}
   scenarioUnit: {fileID: 3926291942457778501}
+  speakerCamera: {fileID: 1968172510}
   onDialogEndMessage: DialogEnd
   onDialogStartMessage: DialogStart
 --- !u!4 &5324115480904256839
@@ -4041,6 +4314,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6800764922185091040}
+  - {fileID: 1968172507}
   - {fileID: 2730285058994233471}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -4214,6 +4488,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 582848340494589451, guid: 2c8636b2149547b499ec4da6cde6fa46, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.431
+      objectReference: {fileID: 0}
     - target: {fileID: 921819214741389030, guid: 2c8636b2149547b499ec4da6cde6fa46, type: 3}
       propertyPath: startScenario.Array.data[1].TargetTransform
       value: 
@@ -4226,9 +4504,17 @@ PrefabInstance:
       propertyPath: startScenario.Array.data[3].TargetTransform
       value: 
       objectReference: {fileID: 1679334882}
+    - target: {fileID: 3523203194031447680, guid: 2c8636b2149547b499ec4da6cde6fa46, type: 3}
+      propertyPath: m_RenderPostProcessing
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3562964142440694021, guid: 2c8636b2149547b499ec4da6cde6fa46, type: 3}
       propertyPath: m_Name
       value: '[NPC]'
+      objectReference: {fileID: 0}
+    - target: {fileID: 4059418086267177938, guid: 2c8636b2149547b499ec4da6cde6fa46, type: 3}
+      propertyPath: speakerId
+      value: NPC_1
       objectReference: {fileID: 0}
     - target: {fileID: 4451530088638957765, guid: 2c8636b2149547b499ec4da6cde6fa46, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4370,7 +4656,8 @@ PrefabInstance:
       propertyPath: onInteract.m_PersistentCalls.m_Calls.Array.data[2].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4394027839616975832, guid: 2c8636b2149547b499ec4da6cde6fa46, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

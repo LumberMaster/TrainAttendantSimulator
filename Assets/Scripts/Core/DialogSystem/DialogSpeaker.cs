@@ -12,14 +12,17 @@ namespace Game
     public class DialogSpeaker : MonoBehaviour
     {
         [Header("Identity")]
-        [Tooltip("Идентификатор спикера. Используется UI, чтобы понять, в какой RawImage выводить портрет с камеры. Должен совпадать с id в списке слотов DialogUI.")]
+        [Tooltip("Идентификатор спикера. Используется UI, чтобы понять, " +
+                 "в какой RawImage выводить портрет с камеры. " +
+                 "Должен совпадать с id в списке слотов DialogUI.")]
         [SerializeField] private string speakerId = "";
 
         [Header("References")]
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private ScenarioUnit scenarioUnit;
 
-        [Tooltip("Камера, вид с которой показывается в UI диалога. Если пусто — берётся Camera с этого же объекта.")]
+        [Tooltip("Камера, вид с которой показывается в UI диалога. " +
+                 "Если пусто — берётся Camera с этого же объекта (не Camera.main).")]
         [SerializeField] private Camera speakerCamera;
 
         [Header("Scenario Messages")]
@@ -51,7 +54,8 @@ namespace Game
             }
 
             if (scenarioUnit == null)
-                Debug.LogWarning($"[DialogSpeaker] На '{name}' нет ScenarioUnit — сообщения из сценария не будут приходить.");
+                Debug.LogWarning($"[DialogSpeaker] На '{name}' нет ScenarioUnit — " +
+                                 "сообщения из сценария не будут приходить.");
         }
 
         /// <summary>Ручной запуск диалога по id (не через сообщение сценария).</summary>

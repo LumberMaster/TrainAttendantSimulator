@@ -79,7 +79,6 @@ namespace Game
                         roleId = l.roleId,
                         text = l.text,
                         audioPath = l.audio != null ? AssetDatabase.GetAssetPath(l.audio) : string.Empty,
-                        fallbackDuration = l.fallbackDuration,
                         isEnd = l.isEnd,
                         useTimer = l.useTimer,
                         timerDuration = l.timerDuration,
@@ -147,7 +146,6 @@ namespace Game
                         audio = string.IsNullOrEmpty(l.audioPath)
                             ? null
                             : AssetDatabase.LoadAssetAtPath<AudioClip>(l.audioPath),
-                        fallbackDuration = l.fallbackDuration,
                         isEnd = l.isEnd,
                         useTimer = l.useTimer,
                         timerDuration = l.timerDuration,
@@ -208,9 +206,6 @@ namespace Game
 
         public AudioClip audio;
 
-        [Tooltip("Если аудио нет — сколько секунд показывать строку.")]
-        public float fallbackDuration = 2f;
-
         [Header("Flow")]
         [Tooltip("Если true — диалог завершается на этой реплике. " +
                  "Варианты перехода (transitions) игнорируются.")]
@@ -220,8 +215,6 @@ namespace Game
         public bool useTimer;
         [Tooltip("Длительность таймера (сек). По истечении выберется первый переход.")]
         public float timerDuration = 5f;
-
-        // Параметры убраны — теперь они живут в DialogLineTransition.
 
         [Header("Transitions / Choices")]
         [Tooltip("Список вариантов ответа. Если пуст — переход к следующей реплике по индексу.")]
@@ -277,7 +270,6 @@ namespace Game
         public string roleId;
         public string text;
         public string audioPath;
-        public float fallbackDuration = 2f;
         public bool isEnd;
         public bool useTimer;
         public float timerDuration = 5f;

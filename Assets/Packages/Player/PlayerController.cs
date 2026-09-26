@@ -212,33 +212,44 @@ public class PlayerController : MonoBehaviour
         Cursor.visible = visible;
         Cursor.lockState = visible ? CursorLockMode.None : CursorLockMode.Locked;
 
-        inputLocked = visible;
-
-        if (inputLocked)
-        {
-            moveInput = Vector2.zero;
-            currentMoveVelocity = Vector3.zero;
-            smoothMoveVelocity = Vector3.zero;
-
-            targetYaw = currentYaw;
-            targetPitch = currentPitch;
-            yawVelocity = 0f;
-            pitchVelocity = 0f;
-
-            SetSprint(false);
-            stepTimer = 0f;
-
-            if (isMoving)
-            {
-                isMoving = false;
-                OnStopMove?.Invoke();
-            }
-        }
+        if (visible) LockInput();
+        else UnlockInput();
     }
 
     public void ToggleCursor() => SetCursorVisible(!Cursor.visible);
 
     public bool IsInputLocked => inputLocked;
+
+    /// <summary>Заблокировать движение/вращение/прыжки/атаку и сбросить накопленную скорость.</summary>
+    public void LockInput()
+    {
+        if (inputLocked) return;
+        inputLocked = true;
+
+        moveInput = Vector2.zero;
+        currentMoveVelocity = Vector3.zero;
+        smoothMoveVelocity = Vector3.zero;
+
+        targetYaw = currentYaw;
+        targetPitch = currentPitch;
+        yawVelocity = 0f;
+        pitchVelocity = 0f;
+
+        SetSprint(false);
+        stepTimer = 0f;
+
+        if (isMoving)
+        {
+            isMoving = false;
+            OnStopMove?.Invoke();
+        }
+    }
+
+    /// <summary>Разблокировать управление.</summary>
+    public void UnlockInput()
+    {
+        inputLocked = false;
+    }
 
     // =====================================================================
     // Основная логика

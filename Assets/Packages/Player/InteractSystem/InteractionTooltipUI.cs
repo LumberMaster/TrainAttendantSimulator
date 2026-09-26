@@ -13,7 +13,7 @@ public class InteractionTooltipUI : MonoBehaviour
     [Tooltip("Текст подсказки (например, 'Открыть дверь')")]
     [SerializeField] private TMP_Text tooltipText;
 
-    [Tooltip("Текст кнопки — статичный, например 'Press E'")]
+    [Tooltip("Текст кнопки — статичный, например '[E]'")]
     [SerializeField] private TMP_Text buttonText;
 
     [Tooltip("Трансформ курсора (UI Image / спрайт), который увеличивается при наведении")]
@@ -24,7 +24,7 @@ public class InteractionTooltipUI : MonoBehaviour
     [SerializeField] private float cursorLerpSpeed = 10f;
 
     [Header("Static Button Text")]
-    [SerializeField] private string buttonStaticText = "Press E";
+    [SerializeField] private string buttonStaticText = "[E]";
 
     [Header("Tooltip Punch Animation (on Interact)")]
     [Tooltip("Насколько раздувается текст подсказки при нажатии")]

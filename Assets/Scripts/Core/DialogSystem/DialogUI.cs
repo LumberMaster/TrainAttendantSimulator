@@ -25,6 +25,14 @@ namespace Game
         [Header("Timer")]
         [Tooltip("Текст обратного отсчёта.")]
         [SerializeField] private TMP_Text timerText;
+        [Tooltip("Слайдер обратного отсчёта (заполняется по мере уменьшения времени).")]
+        [SerializeField] private Slider timerSlider;
+
+        [Header("Next Button")]
+        [Tooltip("Кнопка 'Далее'. Появляется после завершения печати/аудио реплики " +
+                 "и служит сигналом для перехода к следующей реплике. " +
+                 "Если нажата во время печати — печать мгновенно завершается.")]
+        [SerializeField] private Button nextButton;
 
         [Header("Options")]
         [SerializeField] private bool hideWhenNoPortrait = true;
@@ -32,12 +40,12 @@ namespace Game
         [Header("Typewriter")]
         [Tooltip("Сколько символов в секунду печатается. 0 или меньше — без анимации.")]
         [SerializeField] private float charactersPerSecond = 40f;
-        [Tooltip("Пауза после символов . ! ? … (в секундах). 0 — отключено.")]
+        [Tooltip("Пауза после символов . ! ? … , ; : (в секундах). 0 — отключено.")]
         [SerializeField] private float punctuationPause = 0.15f;
         [Tooltip("Также печатать имя посимвольно.")]
         [SerializeField] private bool animateName = false;
 
-        [Header("Portrait")]
+        [Header("Portrait (RenderTexture)")]
         [Tooltip("RawImage, в который выводится портрет текущего говорящего.")]
         [SerializeField] private RawImage portraitRawImage;
 
@@ -46,29 +54,74 @@ namespace Game
         private Coroutine _typeLineRoutine;
         private Coroutine _typeNameRoutine;
 
-        /// <summary>true, пока идёт печать текста.</summary>
+        private string _lineFullText = string.Empty;
+        private string _nameFullText = string.Empty;
+
+        /// <summary>Полная длительность текущего таймера (для нормализации слайдера).</summary>
+        private float _timerDuration = 1f;
+
+        /// <summary>true, пока идёт печать текста реплики.</summary>
         public bool IsTyping { get; private set; }
 
         /// <summary>Вызывается, когда печать реплики завершена (или была прервана/пропущена).</summary>
         public event Action LineTypingCompleted;
 
-        private void Awake() => Hide();
+        /// <summary>Вызывается при нажатии на кнопку «Далее» (когда печать уже завершена).</summary>
+        public event Action NextRequested;
+
+        private void Awake()
+        {
+            if (nextButton != null)
+            {
+                // Никакой навигации/Submit — кнопку можно нажать только настоящим кликом.
+                nextButton.navigation = new Navigation { mode = Navigation.Mode.None };
+
+                // На всякий случай перевешиваем persistent-слушатели, оставшиеся в инспекторе.
+                nextButton.onClick = new Button.ButtonClickedEvent();
+                nextButton.onClick.AddListener(OnNextButtonClicked);
+            }
+
+            Hide();
+        }
+
+        // ---------- Next Button ----------
+
+        private void OnNextButtonClicked()
+        {
+            // Если текст ещё печатается — мгновенно показываем его целиком
+            // и ждём следующего нажатия для перехода к следующей реплике.
+            if (IsTyping)
+            {
+                CompleteTyping();
+                return;
+            }
+
+            NextRequested?.Invoke();
+        }
+
+        /// <summary>Показать/скрыть кнопку «Далее».</summary>
+        public void SetNextButtonVisible(bool visible)
+        {
+            if (nextButton == null) return;
+
+            if (nextButton.gameObject.activeSelf != visible)
+                nextButton.gameObject.SetActive(visible);
+        }
 
         // ---------- Panel ----------
 
         public void Show()
         {
-            if (panel != null)
-            {
-                panel.alpha = 1f;
-                panel.blocksRaycasts = true;
-                panel.interactable = true;
-            }
+            if (panel == null) return;
+
+            panel.alpha = 1f;
+            panel.blocksRaycasts = true;
+            panel.interactable = true;
         }
 
         public void Hide()
         {
-            StopTyping(false);
+            StopAllTyping();
 
             if (panel != null)
             {
@@ -88,6 +141,7 @@ namespace Game
 
             HideChoices();
             SetTimerActive(false, 0f);
+            SetNextButtonVisible(false);
         }
 
         // ---------- Line ----------
@@ -102,10 +156,8 @@ namespace Game
                 {
                     nameText.color = role.nameColor;
 
-                    if (animateName)
-                        StartNameTyping(role.displayName);
-                    else
-                        nameText.text = role.displayName;
+                    if (animateName) StartNameTyping(role.displayName);
+                    else nameText.text = role.displayName;
                 }
                 else
                 {
@@ -115,7 +167,7 @@ namespace Game
                 }
             }
 
-            // Портрет
+            // Спрайтовый портрет (если задан)
             if (portrait != null)
             {
                 portrait.sprite = role != null ? role.portrait : null;
@@ -123,12 +175,11 @@ namespace Game
             }
 
             // Текст реплики
-            var text = line != null ? line.text : string.Empty;
-            StartLineTyping(text);
+            StartLineTyping(line != null ? line.text : string.Empty);
         }
 
         /// <summary>
-        /// Мгновенно завершает печать (например, при клике «далее»).
+        /// Мгновенно завершает печать.
         /// Возвращает true, если что-то было пропущено.
         /// </summary>
         public bool CompleteTyping()
@@ -136,7 +187,7 @@ namespace Game
             if (!IsTyping) return false;
 
             var full = _lineFullText;
-            StopTyping(false);
+            StopAllTyping();
 
             if (lineText != null) lineText.text = full;
             if (nameText != null && animateName) nameText.text = _nameFullText;
@@ -146,9 +197,6 @@ namespace Game
         }
 
         // ---------- Typewriter internals ----------
-
-        private string _lineFullText = string.Empty;
-        private string _nameFullText = string.Empty;
 
         private void StartLineTyping(string text)
         {
@@ -188,7 +236,8 @@ namespace Game
                 if (punctuationPause > 0f)
                 {
                     char c = lineText.textInfo.characterInfo[i - 1].character;
-                    if (c == '.' || c == '!' || c == '?' || c == '…' || c == ',' || c == ';' || c == ':')
+                    if (c == '.' || c == '!' || c == '?' || c == '…' ||
+                        c == ',' || c == ';' || c == ':')
                     {
                         yield return new WaitForSeconds(delay + punctuationPause);
                         continue;
@@ -214,11 +263,10 @@ namespace Game
             IsTyping = false;
         }
 
-        private void StopTyping(bool invokeCompleted)
+        private void StopAllTyping()
         {
             StopLineTyping();
             StopNameTyping();
-            if (invokeCompleted) LineTypingCompleted?.Invoke();
         }
 
         private void StartNameTyping(string text)
@@ -282,6 +330,7 @@ namespace Game
                 if (tr == null) continue;
 
                 var btn = Instantiate(choiceButtonPrefab, choicesContainer);
+
                 if (btn.Label != null)
                     btn.Label.text = string.IsNullOrEmpty(tr.choiceText) ? "..." : tr.choiceText;
 
@@ -292,7 +341,7 @@ namespace Game
                 _spawnedChoices.Add(btn);
             }
 
-            if (choicesContainer.gameObject.activeSelf == false)
+            if (!choicesContainer.gameObject.activeSelf)
                 choicesContainer.gameObject.SetActive(true);
         }
 
@@ -309,21 +358,39 @@ namespace Game
 
         public void SetTimerActive(bool active, float duration)
         {
-            if (timerText == null) return;
+            _timerDuration = Mathf.Max(0.0001f, duration);
 
-            timerText.gameObject.SetActive(active);
-            timerText.text = active ? Mathf.Max(0, Mathf.CeilToInt(duration)).ToString() : string.Empty;
+            if (timerText != null)
+            {
+                timerText.gameObject.SetActive(active);
+                timerText.text = active
+                    ? Mathf.Max(0, Mathf.CeilToInt(duration)).ToString()
+                    : string.Empty;
+            }
+
+            if (timerSlider != null)
+            {
+                timerSlider.gameObject.SetActive(active);
+
+                if (active)
+                {
+                    timerSlider.minValue = 0f;
+                    timerSlider.maxValue = 1f;
+                    timerSlider.value = 1f;
+                }
+            }
         }
 
         public void SetTimer(float remaining)
         {
-            if (timerText == null) return;
-            if (!timerText.gameObject.activeSelf) return;
+            if (timerText != null && timerText.gameObject.activeSelf)
+                timerText.text = Mathf.Max(0, Mathf.CeilToInt(remaining)).ToString();
 
-            timerText.text = Mathf.Max(0, Mathf.CeilToInt(remaining)).ToString();
+            if (timerSlider != null && timerSlider.gameObject.activeSelf)
+                timerSlider.value = Mathf.Clamp01(remaining / _timerDuration);
         }
 
-        // ---------- Portrait ----------
+        // ---------- Portrait (RenderTexture) ----------
 
         /// <summary>
         /// Устанавливает текстуру портрета. Передайте null, чтобы скрыть портрет.
@@ -331,6 +398,7 @@ namespace Game
         public void SetRenderTexture(RenderTexture renderTexture)
         {
             if (portraitRawImage == null) return;
+
             portraitRawImage.texture = renderTexture;
             portraitRawImage.enabled = renderTexture != null;
         }

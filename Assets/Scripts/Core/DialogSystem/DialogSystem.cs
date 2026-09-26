@@ -18,16 +18,16 @@ namespace Game
         [SerializeField] private bool autoSubscribeToUnits = true;
         [SerializeField] private string defaultPlayerRoleId = "";
 
-        [Header("Cursor")]
-        [Tooltip("Показывать курсор во время выбора ответа и скрывать после.")]
-        [SerializeField] private bool showCursorDuringChoices = true;
+        // [NEW] Блокировать игрока и показывать курсор на всё время диалога
+        [Header("Player Block")]
+        [Tooltip("Во время диалога блокировать движение/вращение игрока и показывать курсор.")]
+        [SerializeField] private bool blockPlayerDuringDialog = true;
 
         [Header("Portrait Render")]
-        [Tooltip("RenderTexture, в которую рендерит камера текущего говорящего. Отображается в DialogUI.")]
+        [Tooltip("RenderTexture, в которую рендерит камера текущего говорящего.")]
         [SerializeField] private RenderTexture dialogRenderTexture;
 
         [Header("History")]
-        [Tooltip("Писать историю диалогов в DialogHistory (если он есть в сцене).")]
         [SerializeField] private bool recordHistory = true;
 
         [Header("Events")]
@@ -43,13 +43,18 @@ namespace Game
 
         private Coroutine _routine;
         private bool _skipRequested;
+        private bool _nextRequested;
 
-        // --- Cursor state ---
-        private bool _cursorSaved;
+        private bool _waitingForNext;
+        private int _nextWaitFrames;
+
+        // [CHANGED] Состояние курсора/ввода игрока до старта диалога
+        private bool _dialogInputStateSaved;
         private bool _savedCursorVisible;
         private CursorLockMode _savedCursorLockMode;
+        private bool _savedPlayerInputLocked;
+        private PlayerController _player;
 
-        // --- Portrait / camera state ---
         private Camera _swappedCamera;
         private RenderTexture _swappedCameraOriginalTarget;
 
@@ -69,6 +74,14 @@ namespace Game
             Instance = this;
 
             if (ui == null) ui = FindObjectOfType<DialogUI>(true);
+
+            if (ui != null)
+            {
+                ui.NextRequested += HandleNextRequested;
+            }
+
+            // [NEW] Кэшируем игрока, чтобы не искать каждый раз
+            _player = FindObjectOfType<PlayerController>(true);
         }
 
         private void OnEnable()
@@ -77,11 +90,24 @@ namespace Game
         }
 
         private void OnDisable() => UnsubscribeFromAllUnits();
+
         private void OnDestroy()
         {
-            RestoreCursor();
+            if (ui != null)
+            {
+                ui.NextRequested -= HandleNextRequested;
+            }
+
+            EndDialogCursorAndInput(); // [CHANGED] было RestoreCursor()
             ClearActivePortrait();
             if (Instance == this) Instance = null;
+        }
+
+        private void HandleNextRequested()
+        {
+            if (!_waitingForNext) return;
+            if (_nextWaitFrames < 2) return;
+            _nextRequested = true;
         }
 
         // ---------- Публичное API ----------
@@ -114,24 +140,23 @@ namespace Game
             ui?.Hide();
             ui?.HideChoices();
             ui?.SetTimerActive(false, 0f);
+            ui?.SetNextButtonVisible(false);
 
-            RestoreCursor();
+            EndDialogCursorAndInput(); // [CHANGED] было RestoreCursor()
             ClearActivePortrait();
 
             if (IsPlaying)
             {
                 var id = CurrentDialog != null ? CurrentDialog.id : string.Empty;
                 OnDialogEnd.Invoke(id);
+
                 if (CurrentSpeaker != null && !string.IsNullOrEmpty(CurrentSpeaker.OnDialogEndMessage))
                     SendScenarioMessage(CurrentSpeaker, CurrentSpeaker.OnDialogEndMessage);
 
                 if (recordHistory) DialogHistory.Instance?.EndDialog();
             }
 
-            IsPlaying = false;
-            CurrentSpeaker = null;
-            CurrentDialog = null;
-            _skipRequested = false;
+            ResetState();
         }
 
         public void SkipCurrentLine()
@@ -188,11 +213,30 @@ namespace Game
             StartDialog(speaker, message);
         }
 
+        private void ResetState()
+        {
+            IsPlaying = false;
+            CurrentSpeaker = null;
+            CurrentDialog = null;
+            _routine = null;
+            _skipRequested = false;
+            _nextRequested = false;
+            _waitingForNext = false;
+            _nextWaitFrames = 0;
+        }
+
         private IEnumerator PlayRoutine(DialogSpeaker speaker, DialogAsset dialog)
         {
             IsPlaying = true;
             CurrentSpeaker = speaker;
             CurrentDialog = dialog;
+            _skipRequested = false;
+            _nextRequested = false;
+            _waitingForNext = false;
+            _nextWaitFrames = 0;
+
+            // [NEW] Показываем курсор и блокируем игрока на всё время диалога
+            BeginDialogCursorAndInput();
 
             ui?.Show();
 
@@ -213,130 +257,65 @@ namespace Game
                 var line = dialog.lines[index];
                 if (line == null) { index++; continue; }
 
-                // Портрет — по roleId реплики
                 SetActivePortraitForRole(line.roleId);
 
                 var role = database.GetRole(line.roleId);
+
                 ui?.SetLine(role, line);
                 OnDialogLine.Invoke(role, line);
 
-                // === Запись реплики в историю (без параметров — они теперь на переходах) ===
                 if (recordHistory)
                     DialogHistory.Instance?.RecordLine(dialog.id, line);
 
-                yield return PlayLineAudio(source, line);
-                if (!IsPlaying) { RestoreCursor(); ClearActivePortrait(); yield break; }
+                bool hasAudio = source != null && line.audio != null;
+                if (hasAudio)
+                {
+                    source.clip = line.audio;
+                    source.Play();
+                }
 
-                // === Конец диалога на этой реплике ===
+                yield return WaitForNextButton();
+
+                if (!IsPlaying)
+                {
+                    StopAudio(source, hasAudio);
+                    EndDialogCursorAndInput(); // [CHANGED]
+                    ClearActivePortrait();
+                    yield break;
+                }
+
                 if (line.isEnd)
                 {
+                    StopAudio(source, hasAudio);
                     break;
                 }
 
-                if (line.transitions != null && line.transitions.Count > 0)
+                bool hasChoices = line.transitions != null && line.transitions.Count > 0;
+
+                if (hasChoices)
                 {
-                    int chosenIndex = -1;
-                    bool chosen = false;
-
-                    ShowCursor();
-
-                    ui?.ShowChoices(line.transitions, i => { chosenIndex = i; chosen = true; });
-                    ui?.SetTimerActive(line.useTimer, line.timerDuration);
-
-                    float timeLeft = line.timerDuration;
-
-                    while (IsPlaying && !chosen)
-                    {
-                        if (line.useTimer)
-                        {
-                            timeLeft -= Time.deltaTime;
-                            ui?.SetTimer(timeLeft);
-
-                            if (timeLeft <= 0f)
-                            {
-                                chosenIndex = 0;
-                                chosen = true;
-                                break;
-                            }
-                        }
-                        yield return null;
-                    }
-
-                    ui?.HideChoices();
-                    ui?.SetTimerActive(false, 0f);
-
-                    RestoreCursor();
-
+                    yield return HandleChoicesForLine(line, dialog, source, hasAudio);
                     if (!IsPlaying) yield break;
 
-                    if (chosenIndex < 0 || chosenIndex >= line.transitions.Count) { index++; continue; }
+                    int lastChoice = _lastChosenTargetIndex;
+                    _lastChosenTargetIndex = -1;
 
-                    var tr = line.transitions[chosenIndex];
-                    if (tr == null) { index++; continue; }
-
-                    if (!string.IsNullOrEmpty(tr.choiceText) || tr.choiceAudio != null)
-                    {
-                        string roleId = !string.IsNullOrEmpty(tr.speakerRoleId)
-                            ? tr.speakerRoleId
-                            : defaultPlayerRoleId;
-
-                        SetActivePortraitForRole(roleId);
-
-                        var choiceLine = new DialogLine
-                        {
-                            id = "__choice__",
-                            roleId = roleId,
-                            text = tr.choiceText,
-                            audio = tr.choiceAudio,
-                            fallbackDuration = 1.2f
-                        };
-
-                        var choiceRole = database.GetRole(roleId);
-                        ui?.SetLine(choiceRole, choiceLine);
-                        OnDialogLine.Invoke(choiceRole, choiceLine);
-
-                        // === Запись выбранного варианта: очки берём из перехода ===
-                        if (recordHistory)
-                            DialogHistory.Instance?.RecordLine(
-                                dialog.id, choiceLine,
-                                isChoice: true,
-                                selectedChoiceText: tr.choiceText,
-                                targetLineId: tr.targetLineId,
-                                parameters: tr.parameters);
-
-                        yield return PlayLineAudio(source, choiceLine);
-                        if (!IsPlaying) yield break;
-                    }
-                    else
-                    {
-                        // Даже если нет текста/аудио — очки за выбор всё равно должны быть записаны.
-                        if (recordHistory)
-                            DialogHistory.Instance?.RecordLine(
-                                dialog.id,
-                                new DialogLine { id = "__choice__", roleId = null, text = string.Empty },
-                                isChoice: true,
-                                selectedChoiceText: tr.choiceText,
-                                targetLineId: tr.targetLineId,
-                                parameters: tr.parameters);
-                    }
-
-                    int targetIdx = dialog.IndexOfLine(tr.targetLineId);
-                    if (targetIdx < 0)
-                    {
-                        Debug.LogWarning($"[DialogSystem] Transition target '{tr.targetLineId}' не найден в диалоге '{dialog.id}'.");
-                        index++;
-                    }
-                    else index = targetIdx;
+                    if (lastChoice >= 0) index = lastChoice;
+                    else index++;
                 }
-                else index++;
+                else
+                {
+                    StopAudio(source, hasAudio);
+                    index++;
+                }
             }
 
-            IsPlaying = false;
             ui?.Hide();
             ui?.HideChoices();
             ui?.SetTimerActive(false, 0f);
+            ui?.SetNextButtonVisible(false);
 
-            RestoreCursor();
+            EndDialogCursorAndInput(); // [CHANGED]
             ClearActivePortrait();
 
             OnDialogEnd.Invoke(dialog.id);
@@ -345,37 +324,187 @@ namespace Game
 
             if (recordHistory) DialogHistory.Instance?.EndDialog();
 
-            CurrentSpeaker = null;
-            CurrentDialog = null;
-            _routine = null;
+            ResetState();
         }
 
-        private IEnumerator PlayLineAudio(AudioSource source, DialogLine line)
+        /// <summary>
+        /// Показывает кнопку «Далее» и ждёт клик по ней.
+        /// Фаза 1: если идёт печать — первый клик мгновенно её завершает (скип).
+        /// Фаза 2: второй клик — переход дальше.
+        /// </summary>
+        private IEnumerator WaitForNextButton()
         {
+            yield return null;
+
+            _nextRequested = false;
+            _nextWaitFrames = 0;
+            _waitingForNext = true;
+
+            ui?.SetNextButtonVisible(true);
+
+            // --- Фаза 1: скип печати ---
+            while (IsPlaying && ui != null && ui.IsTyping &&
+                   !_nextRequested && !_skipRequested)
+            {
+                _nextWaitFrames++;
+                yield return null;
+            }
+
+            if (!IsPlaying)
+            {
+                _waitingForNext = false;
+                _nextWaitFrames = 0;
+                _nextRequested = false;
+                _skipRequested = false;
+                ui?.SetNextButtonVisible(false);
+                yield break;
+            }
+
+            if (ui != null && ui.IsTyping && (_nextRequested || _skipRequested))
+            {
+                ui.CompleteTyping();
+                _nextRequested = false;
+                _skipRequested = false;
+                _nextWaitFrames = 0;
+            }
+
+            // --- Фаза 2: ожидание клика для перехода ---
+            _nextRequested = false;
+            _nextWaitFrames = 0;
+
+            while (IsPlaying && !_nextRequested)
+            {
+                _nextWaitFrames++;
+                yield return null;
+            }
+
+            _waitingForNext = false;
+            _nextWaitFrames = 0;
+            _nextRequested = false;
             _skipRequested = false;
 
-            if (source != null && line.audio != null)
+            ui?.SetNextButtonVisible(false);
+        }
+
+        // ==== Choices ====
+
+        private int _lastChosenTargetIndex = -1;
+
+        private IEnumerator HandleChoicesForLine(
+            DialogLine line, DialogAsset dialog, AudioSource source, bool hasAudio)
+        {
+            int chosenIndex = -1;
+            bool chosen = false;
+
+            // [CHANGED] Курсор уже виден (показывается на старте диалога) — здесь ничего не делаем.
+
+            ui?.ShowChoices(line.transitions, i => { chosenIndex = i; chosen = true; });
+            ui?.SetTimerActive(line.useTimer, line.timerDuration);
+
+            float timeLeft = line.timerDuration;
+
+            while (IsPlaying && !chosen)
             {
-                source.clip = line.audio;
-                source.Play();
+                if (line.useTimer)
+                {
+                    timeLeft -= Time.deltaTime;
+                    ui?.SetTimer(timeLeft);
+                    if (timeLeft <= 0f) { chosenIndex = 0; break; }
+                }
+                yield return null;
+            }
 
-                while (source.isPlaying && !_skipRequested && IsPlaying)
-                    yield return null;
+            ui?.HideChoices();
+            ui?.SetTimerActive(false, 0f);
 
-                source.Stop();
+            StopAudio(source, hasAudio);
+
+            if (!IsPlaying) yield break;
+
+            if (chosenIndex < 0 || chosenIndex >= line.transitions.Count)
+            {
+                _lastChosenTargetIndex = -1;
+                yield break;
+            }
+
+            var tr = line.transitions[chosenIndex];
+            if (tr == null)
+            {
+                _lastChosenTargetIndex = -1;
+                yield break;
+            }
+
+            if (!string.IsNullOrEmpty(tr.choiceText) || tr.choiceAudio != null)
+            {
+                string roleId = !string.IsNullOrEmpty(tr.speakerRoleId)
+                    ? tr.speakerRoleId
+                    : defaultPlayerRoleId;
+
+                SetActivePortraitForRole(roleId);
+
+                var choiceLine = new DialogLine
+                {
+                    id = "__choice__",
+                    roleId = roleId,
+                    text = tr.choiceText,
+                    audio = tr.choiceAudio
+                };
+
+                var choiceRole = database.GetRole(roleId);
+
+                ui?.SetLine(choiceRole, choiceLine);
+                OnDialogLine.Invoke(choiceRole, choiceLine);
+
+                if (recordHistory)
+                    DialogHistory.Instance?.RecordLine(
+                        dialog.id, choiceLine,
+                        isChoice: true,
+                        selectedChoiceText: tr.choiceText,
+                        targetLineId: tr.targetLineId,
+                        parameters: tr.parameters);
+
+                bool choiceHasAudio = source != null && choiceLine.audio != null;
+                if (choiceHasAudio)
+                {
+                    source.clip = choiceLine.audio;
+                    source.Play();
+                }
+
+                yield return WaitForNextButton();
+
+                StopAudio(source, choiceHasAudio);
+
+                if (!IsPlaying) yield break;
             }
             else
             {
-                float dur = line.fallbackDuration > 0f ? line.fallbackDuration : 2f;
-                float t = 0f;
-                while (t < dur && !_skipRequested && IsPlaying)
-                {
-                    t += Time.deltaTime;
-                    yield return null;
-                }
+                if (recordHistory)
+                    DialogHistory.Instance?.RecordLine(
+                        dialog.id,
+                        new DialogLine { id = "__choice__", roleId = null, text = string.Empty },
+                        isChoice: true,
+                        selectedChoiceText: tr.choiceText,
+                        targetLineId: tr.targetLineId,
+                        parameters: tr.parameters);
             }
 
-            _skipRequested = false;
+            int targetIdx = dialog.IndexOfLine(tr.targetLineId);
+            if (targetIdx < 0)
+            {
+                Debug.LogWarning($"[DialogSystem] Transition target '{tr.targetLineId}' " +
+                                 $"не найден в диалоге '{dialog.id}'.");
+                _lastChosenTargetIndex = -1;
+            }
+            else
+            {
+                _lastChosenTargetIndex = targetIdx;
+            }
+        }
+
+        private static void StopAudio(AudioSource source, bool hasAudio)
+        {
+            if (hasAudio && source != null && source.isPlaying)
+                source.Stop();
         }
 
         private void SendScenarioMessage(DialogSpeaker speaker, string message)
@@ -436,28 +565,46 @@ namespace Game
             ui?.SetRenderTexture(null);
         }
 
-        // ---------- Курсор ----------
+        // ---------- Курсор и блокировка игрока ----------
 
-        private void ShowCursor()
+        /// <summary>
+        /// Показывает курсор, разблокирует его лок и блокирует управление игроком.
+        /// Сохраняет предыдущее состояние, чтобы вернуть его после диалога.
+        /// </summary>
+        private void BeginDialogCursorAndInput()
         {
-            if (!showCursorDuringChoices) return;
-            if (_cursorSaved) return;
+            if (_dialogInputStateSaved) return;
+            _dialogInputStateSaved = true;
 
             _savedCursorVisible = Cursor.visible;
             _savedCursorLockMode = Cursor.lockState;
-            _cursorSaved = true;
+
+            if (!blockPlayerDuringDialog) return;
 
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
+
+            if (_player == null) _player = FindObjectOfType<PlayerController>(true);
+            if (_player != null)
+            {
+                _savedPlayerInputLocked = _player.IsInputLocked;
+                _player.LockInput();
+            }
         }
 
-        private void RestoreCursor()
+        /// <summary>
+        /// Возвращает курсор и управление игроком в состояние, которое было до диалога.
+        /// </summary>
+        private void EndDialogCursorAndInput()
         {
-            if (!_cursorSaved) return;
+            if (!_dialogInputStateSaved) return;
+            _dialogInputStateSaved = false;
 
             Cursor.visible = _savedCursorVisible;
             Cursor.lockState = _savedCursorLockMode;
-            _cursorSaved = false;
+
+            if (_player != null && !_savedPlayerInputLocked)
+                _player.UnlockInput();
         }
     }
 }

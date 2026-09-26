@@ -15,6 +15,21 @@ public class NPCController : MonoBehaviour
     [Tooltip("Список команд NPC — редактируется прямо здесь")]
     [SerializeField] private List<NPCCommandData> startScenario = new List<NPCCommandData>();
 
+    [Header("Стартовая анимация")]
+    [Tooltip("Имя состояния (State) в Animator, которое проиграется при запуске сцены. " +
+             "Проигрывается принудительно через Animator.Play — переходы не нужны.")]
+    [SerializeField] private string startAnimationStateName = "";
+
+    [Tooltip("Слой Animator, на котором играть стартовую анимацию (0 — базовый)")]
+    [SerializeField] private int startAnimationLayer = 0;
+
+    [Tooltip("Нормализованное время начала (0 — с начала, 0.5 — с середины)")]
+    [Range(0f, 1f)]
+    [SerializeField] private float startAnimationNormalizedTime = 0f;
+
+    [Tooltip("Проигрывать стартовую анимацию до запуска сценария команд")]
+    [SerializeField] private bool playStartAnimationBeforeScenario = true;
+
     [Header("Параметры анимации")]
     [Tooltip("Float-параметр Animator: 0 — стоит, 1 — бежит")]
     public string SpeedParam = "Speed";
@@ -42,6 +57,7 @@ public class NPCController : MonoBehaviour
     private readonly Queue<NPCCommandData> _queue = new Queue<NPCCommandData>();
     private bool _isExecuting;
     private Coroutine _routine;
+    private bool _startAnimationPlaying;
 
     public bool HasCommands => _queue.Count > 0 || _isExecuting;
 
@@ -53,14 +69,105 @@ public class NPCController : MonoBehaviour
 
     void Start()
     {
+        // 1. Принудительно запускаем стартовую анимацию (игнорируя переходы)
+        if (!string.IsNullOrEmpty(startAnimationStateName))
+        {
+            PlayStartAnimation();
+        }
+
+        // 2. Если нужно — запускаем сценарий команд
         if (playScenarioOnStart && startScenario.Count > 0)
+        {
+            if (playStartAnimationBeforeScenario && _startAnimationPlaying)
+                StartCoroutine(StartScenarioAfterAnimation());
+            else
+                EnqueueCommands(startScenario);
+        }
+    }
+
+    // =========================================================
+    //  СТАРТОВАЯ АНИМАЦИЯ
+    // =========================================================
+
+    /// <summary>
+    /// Принудительно проигрывает указанное состояние Animator,
+    /// игнорируя какие-либо переходы и условия.
+    /// </summary>
+    public void PlayStartAnimation()
+    {
+        if (string.IsNullOrEmpty(startAnimationStateName))
+        {
+            Debug.LogWarning($"[NPCController] Имя стартовой анимации не задано на {name}");
+            return;
+        }
+
+        int stateHash = Animator.StringToHash(startAnimationStateName);
+
+        // Проверяем, существует ли такое состояние (защита от опечаток)
+        if (!_animator.HasState(startAnimationLayer, stateHash))
+        {
+            Debug.LogWarning($"[NPCController] Состояние '{startAnimationStateName}' " +
+                             $"не найдено на слое {startAnimationLayer} у {name}");
+            return;
+        }
+
+        // Принудительный вход в состояние — переходы не нужны
+        _animator.Play(stateHash, startAnimationLayer, startAnimationNormalizedTime);
+        _animator.Update(0f); // мгновенно применяем
+
+        _startAnimationPlaying = true;
+        StartCoroutine(TrackStartAnimation(stateHash));
+    }
+
+    private IEnumerator StartScenarioAfterAnimation()
+    {
+        // Ждём, пока стартовая анимация доиграет
+        while (_startAnimationPlaying)
+            yield return null;
+
+        if (startScenario.Count > 0)
             EnqueueCommands(startScenario);
+    }
+
+    private IEnumerator TrackStartAnimation(int stateHash)
+    {
+        // Даём Animator один кадр, чтобы переключиться в нужное состояние
+        yield return null;
+
+        var stateInfo = _animator.GetCurrentAnimatorStateInfo(startAnimationLayer);
+
+        // Если по какой-то причине не попали в нужное состояние — не блокируем сценарий
+        if (stateInfo.shortNameHash != stateHash)
+        {
+            _startAnimationPlaying = false;
+            yield break;
+        }
+
+        float length = stateInfo.length;
+
+        // Если анимация зациклена — не ждём её окончания
+        if (stateInfo.loop && length > 0.01f)
+        {
+            _startAnimationPlaying = false;
+            yield break;
+        }
+
+        // Ждём завершения (с небольшим запасом)
+        if (length > 0.01f && length < 60f)
+            yield return new WaitForSeconds(length);
+
+        _startAnimationPlaying = false;
     }
 
     void Update()
     {
-        float speed01 = _agent.velocity.magnitude / Mathf.Max(_agent.speed, 0.01f);
-        _animator.SetFloat(SpeedParam, speed01, 0.1f, Time.deltaTime);
+        // Пока играет стартовая анимация без переходов — не трогаем Speed,
+        // чтобы не сбить её через параметры Animator.
+        if (!_startAnimationPlaying)
+        {
+            float speed01 = _agent.velocity.magnitude / Mathf.Max(_agent.speed, 0.01f);
+            _animator.SetFloat(SpeedParam, speed01, 0.1f, Time.deltaTime);
+        }
     }
 
     // =========================================================
@@ -157,7 +264,6 @@ public class NPCController : MonoBehaviour
         _agent.isStopped = false;
         _agent.SetDestination(dest);
 
-        // Ждём пока агент просчитает путь
         yield return null;
 
         while (!_agent.pathPending &&
@@ -175,7 +281,7 @@ public class NPCController : MonoBehaviour
         if (string.IsNullOrEmpty(cmd.AnimationTrigger)) yield break;
 
         _animator.SetTrigger(cmd.AnimationTrigger);
-        yield return null; // даём Animator'у переключиться
+        yield return null;
 
         float len = _animator.GetCurrentAnimatorStateInfo(0).length;
         if (len > 0.01f && len < 30f)

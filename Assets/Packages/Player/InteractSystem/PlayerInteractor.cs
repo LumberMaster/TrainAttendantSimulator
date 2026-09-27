@@ -28,8 +28,16 @@ public class PlayerInteractor : MonoBehaviour
     public InteractableEvent onFocusExit;
     public InteractableEvent onInteract;
 
+    [Header("Global Interactive Focus Events (focus + CanInteract)")]
+    public InteractableEvent onInteractiveFocusEnter;
+    public InteractableEvent onInteractiveFocusExit;
+
     private IInteractable currentTarget;
     public IInteractable CurrentTarget => currentTarget;
+
+    // Цель, которая сейчас в фокусе И может быть использована (CanInteract == true)
+    private IInteractable interactiveTarget;
+    public IInteractable CurrentInteractiveTarget => interactiveTarget;
 
     public string GetInteractButtonDisplayString()
     {
@@ -92,18 +100,53 @@ public class PlayerInteractor : MonoBehaviour
 
         if (!ReferenceEquals(newTarget, currentTarget))
         {
+            // --- Выходим из старой цели ---
             if (currentTarget != null)
             {
+                // Сначала гасим "интерактивный фокус", если он был активен
+                if (ReferenceEquals(interactiveTarget, currentTarget))
+                {
+                    currentTarget.OnInteractiveFocusExit();
+                    onInteractiveFocusExit?.Invoke(currentTarget);
+                    interactiveTarget = null;
+                }
+
                 currentTarget.OnFocusExit();
                 onFocusExit?.Invoke(currentTarget);
             }
 
             currentTarget = newTarget;
 
+            // --- Входим в новую цель ---
             if (currentTarget != null)
             {
                 currentTarget.OnFocusEnter();
                 onFocusEnter?.Invoke(currentTarget);
+
+                if (currentTarget.CanInteract)
+                {
+                    interactiveTarget = currentTarget;
+                    currentTarget.OnInteractiveFocusEnter();
+                    onInteractiveFocusEnter?.Invoke(currentTarget);
+                }
+            }
+        }
+        else if (currentTarget != null)
+        {
+            // Фокус не менялся, но CanInteract мог измениться "на лету"
+            bool isInteractive = ReferenceEquals(interactiveTarget, currentTarget);
+
+            if (!isInteractive && currentTarget.CanInteract)
+            {
+                interactiveTarget = currentTarget;
+                currentTarget.OnInteractiveFocusEnter();
+                onInteractiveFocusEnter?.Invoke(currentTarget);
+            }
+            else if (isInteractive && !currentTarget.CanInteract)
+            {
+                currentTarget.OnInteractiveFocusExit();
+                onInteractiveFocusExit?.Invoke(currentTarget);
+                interactiveTarget = null;
             }
         }
     }

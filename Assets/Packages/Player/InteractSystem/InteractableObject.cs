@@ -11,6 +11,10 @@ public interface IInteractable
     void OnFocusEnter();
     void OnFocusExit();
     void OnInteract();
+
+    // Вызываются, только когда объект в фокусе И CanInteract == true
+    void OnInteractiveFocusEnter();
+    void OnInteractiveFocusExit();
 }
 
 public class InteractableObject : MonoBehaviour, IInteractable
@@ -29,6 +33,12 @@ public class InteractableObject : MonoBehaviour, IInteractable
     [Header("Focus")]
     public UnityEvent onFocusEnter;
     public UnityEvent onFocusExit;
+
+    [Header("Interactive Focus (focus + canInteract)")]
+    [Tooltip("Срабатывает при наведении, когда CanInteract == true")]
+    public UnityEvent onInteractiveFocusEnter;
+    [Tooltip("Срабатывает при отведении, если ранее сработал onInteractiveFocusEnter")]
+    public UnityEvent onInteractiveFocusExit;
 
     [Header("Interaction")]
     public UnityEvent onInteract;
@@ -61,4 +71,7 @@ public class InteractableObject : MonoBehaviour, IInteractable
     public void OnFocusEnter() => onFocusEnter?.Invoke();
     public void OnFocusExit() => onFocusExit?.Invoke();
     public void OnInteract() => onInteract?.Invoke();
+
+    public void OnInteractiveFocusEnter() => onInteractiveFocusEnter?.Invoke();
+    public void OnInteractiveFocusExit() => onInteractiveFocusExit?.Invoke();
 }

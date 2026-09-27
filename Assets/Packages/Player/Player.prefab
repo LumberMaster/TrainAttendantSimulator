@@ -3783,6 +3783,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4924679240181890110, guid: 6a335bf8de5b33a478cc788174ee56ea, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4281041881189402774}
+    - targetCorrespondingSourceObject: {fileID: 4924679240181890110, guid: 6a335bf8de5b33a478cc788174ee56ea, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7831319866251777104}
   m_SourcePrefab: {fileID: 100100000, guid: 6a335bf8de5b33a478cc788174ee56ea, type: 3}
 --- !u!224 &2192505511018089710 stripped
 RectTransform:
@@ -3909,3 +3912,30 @@ MonoBehaviour:
   speakerCamera: {fileID: 0}
   onDialogEndMessage: DialogEnd
   onDialogStartMessage: DialogStart
+--- !u!114 &7831319866251777104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6006981587895213001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c80507e91bc5f1442bc7e8b793c90bba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PassengerInfoUI
+  playerInteractor: {fileID: 4449258359988862260}
+  panelRoot: {fileID: 0}
+  nameText: {fileID: 0}
+  ticketStatusText: {fileID: 0}
+  genderText: {fileID: 0}
+  ageText: {fileID: 0}
+  loyaltyText: {fileID: 0}
+  notesText: {fileID: 0}
+  loyaltyIcon: {fileID: 0}
+  loyaltyHostileIcon: {fileID: 0}
+  loyaltyDissatisfiedIcon: {fileID: 0}
+  loyaltyNeutralIcon: {fileID: 0}
+  loyaltySatisfiedIcon: {fileID: 0}
+  loyaltyLoyalIcon: {fileID: 0}
+  hideOnStart: 1

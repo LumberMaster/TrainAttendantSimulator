@@ -1188,6 +1188,7 @@ GameObject:
   - component: {fileID: 5173274899139270598}
   - component: {fileID: 4059418086267177938}
   - component: {fileID: 1448013835136193686}
+  - component: {fileID: 2897883167711489729}
   m_Layer: 0
   m_Name: '[NPC]'
   m_TagString: Untagged
@@ -1582,6 +1583,26 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &2897883167711489729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3562964142440694021}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9fd0e60b3041b824885b225a448dcb99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PassengerData
+  lastName: "\u041D\u0435\u0442\u0440\u0435\u0431\u0435\u043D\u043A\u043E"
+  firstName: "\u0412\u0438\u0442\u0430\u043B\u0438\u0439"
+  middleName: "\u0418\u0432\u0430\u043D\u043E\u0432\u0438\u0447"
+  ticketStatus: 1
+  gender: 1
+  age: 30
+  loyalty: 2
+  notes: 
 --- !u!1 &3724172976666525343
 GameObject:
   m_ObjectHideFlags: 0

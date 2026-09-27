@@ -54,8 +54,9 @@ public class InteractionTooltipUI : MonoBehaviour
     {
         if (playerInteractor == null) return;
 
-        playerInteractor.onFocusEnter.AddListener(HandleFocusEnter);
-        playerInteractor.onFocusExit.AddListener(HandleFocusExit);
+        // Подсказка показывается именно на интерактивных целях (focus + CanInteract)
+        playerInteractor.onInteractiveFocusEnter.AddListener(HandleFocusEnter);
+        playerInteractor.onInteractiveFocusExit.AddListener(HandleFocusExit);
         playerInteractor.onInteract.AddListener(HandleInteract);
 
         if (buttonText != null)
@@ -68,8 +69,8 @@ public class InteractionTooltipUI : MonoBehaviour
     {
         if (playerInteractor == null) return;
 
-        playerInteractor.onFocusEnter.RemoveListener(HandleFocusEnter);
-        playerInteractor.onFocusExit.RemoveListener(HandleFocusExit);
+        playerInteractor.onInteractiveFocusEnter.RemoveListener(HandleFocusEnter);
+        playerInteractor.onInteractiveFocusExit.RemoveListener(HandleFocusExit);
         playerInteractor.onInteract.RemoveListener(HandleInteract);
     }
 
@@ -77,7 +78,7 @@ public class InteractionTooltipUI : MonoBehaviour
     {
         if (cursorTransform == null) return;
 
-        Vector3 target = (playerInteractor != null && playerInteractor.CurrentTarget != null)
+        Vector3 target = (playerInteractor != null && playerInteractor.CurrentInteractiveTarget != null)
             ? cursorBaseScale * cursorHoverScale
             : cursorBaseScale;
 

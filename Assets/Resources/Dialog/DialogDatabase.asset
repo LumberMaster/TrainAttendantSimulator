@@ -25,6 +25,21 @@ MonoBehaviour:
     displayName: "\u0410\u043D\u0430\u0441\u0442\u0430\u0441\u0438\u044F"
     nameColor: {r: 0, g: 0, b: 0, a: 1}
     portrait: {fileID: 0}
+  - roleId: NPC_3
+    displayName: "\u0414\u0430\u0440\u044C\u044F"
+    nameColor: {r: 0, g: 0, b: 0, a: 1}
+    portrait: {fileID: 0}
+  - roleId: NPC_4
+    displayName: "\u0412\u0438\u043A\u0442\u043E\u0440\u0438\u044F"
+    nameColor: {r: 0, g: 0, b: 0, a: 1}
+    portrait: {fileID: 0}
+  - roleId: NPC_5
+    displayName: "\u041A\u0438\u0440\u0438\u043B\u043B"
+    nameColor: {r: 0, g: 0, b: 0, a: 1}
+    portrait: {fileID: 0}
   dialogs:
+  - {fileID: 11400000, guid: 93b4f7ec54219c34ba33ed693d8661b3, type: 2}
   - {fileID: 11400000, guid: f6bb6b6e020677e4bb7530c3bc699365, type: 2}
+  - {fileID: 11400000, guid: dbe2740468049474ba60b97e89497bf4, type: 2}
   - {fileID: 11400000, guid: 3b5a7db2acd3db148895dc11f21207dc, type: 2}
+  - {fileID: 11400000, guid: 2fdd42cf2ba573f45b8af51f308fa998, type: 2}

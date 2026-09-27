@@ -553,6 +553,12 @@ MonoBehaviour:
   onInteract:
     m_PersistentCalls:
       m_Calls: []
+  onInteractiveFocusEnter:
+    m_PersistentCalls:
+      m_Calls: []
+  onInteractiveFocusExit:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!82 &4010417727972693150
 AudioSource:
   m_ObjectHideFlags: 0
@@ -3118,6 +3124,12 @@ MonoBehaviour:
   speakerCamera: {fileID: 0}
   onDialogEndMessage: DialogEnd
   onDialogStartMessage: DialogStart
+  onDialogStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onDialogEnd:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &7868670815816582484
 GameObject:
   m_ObjectHideFlags: 0
@@ -3912,6 +3924,12 @@ MonoBehaviour:
   speakerCamera: {fileID: 0}
   onDialogEndMessage: DialogEnd
   onDialogStartMessage: DialogStart
+  onDialogStart:
+    m_PersistentCalls:
+      m_Calls: []
+  onDialogEnd:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &7831319866251777104
 MonoBehaviour:
   m_ObjectHideFlags: 0

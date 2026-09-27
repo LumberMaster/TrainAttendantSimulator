@@ -1,0 +1,37 @@
+# HTTPS-терминация для Train Attendant Simulator API.
+#
+# Особенность: сертификат нужен на ГОЛЫЙ IP (91.229.11.11), без домена.
+# Let's Encrypt выдаёт сертификаты на публичные IP только в профиле "shortlived"
+# (срок жизни ~6 дней, Caddy продлевает автоматически).
+# Для IP подходит только челлендж TLS-ALPN-01 на порту 443, поэтому http-челлендж
+# отключён глобально (порт 80 на сервере всё равно занят другим проектом).
+
+{
+	# Админ-API Caddy наружу не публикуем.
+	admin off
+
+	# CLIENT (browser) does not send SNI for bare IP (RFC 6066); without SNI Caddy cannot pick a cert -> fatal alert internal error. default_sni fixes this.
+	default_sni 91.229.11.11
+}
+
+https://91.229.11.11 {
+	tls {
+		issuer acme {
+			# Профиль Let's Encrypt для IP-сертификатов (~6 дней, авто-продление).
+			# Только этот профиль выдаёт сертификаты на голый IP-адрес.
+			profile shortlived
+			# Для IP подходит ТОЛЬКО челлендж TLS-ALPN-01 (порт 443),
+			# HTTP-01 для IP-адресов Let's Encrypt не поддерживает — отключаем.
+			disable_http_challenge
+		}
+	}
+
+	# reverse_proxy по умолчанию сам добавляет X-Forwarded-For /
+	# X-Forwarded-Proto / X-Forwarded-Host, поэтому header_up не нужен.
+	reverse_proxy api:8000
+
+	# CORS-заголовки Caddy по умолчанию НЕ трогает — их ставит FastAPI,
+	# и они проходят насквозь без изменений. Preflight (OPTIONS) тоже
+	# проксируется наверх, чтобы Starlette сам решил, разрешён ли Origin
+	# из CORS_ALLOW_ORIGINS.
+}

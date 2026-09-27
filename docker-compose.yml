@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: tas-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-TrainAttendantSimulator}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-TrainAttendantSimulator}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: tas-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-TrainAttendantSimulator}
+      SECRET_KEY: ${SECRET_KEY:-devsecretkey}
+      ACCESS_TOKEN_EXPIRE_MINUTES: "720"
+      JWT_ALGORITHM: HS256
+      CORS_ALLOW_ORIGINS: "*"
+      CORS_ORIGIN_REGEX: ""
+      CORS_ALLOW_METHODS: "GET,POST,OPTIONS"
+      CORS_ALLOW_HEADERS: "Content-Type,Authorization"
+      DB_HOST: db
+      DB_PORT: "5432"
+    ports:
+      - "127.0.0.1:8000:8000"
+
+volumes:
+  pgdata:

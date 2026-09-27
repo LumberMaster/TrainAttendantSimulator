@@ -10,7 +10,7 @@ const CONFIG = {
   },
   SCENARIOS: {
     list:          "/api/v1/scenarios/",
-    start:         "/api/v1/scenarios/start",
+    // start больше не используется — результат создаётся только в finish
     finish:        "/api/v1/scenarios/finish",
     leaderboard:   "/api/v1/scenarios/leaderboard",
     results:       "/api/v1/scenarios/results",
@@ -29,7 +29,6 @@ const State = {
   myResults: [],
   activeResult: null,
   activeScenario: null,
-  activeResultId: null,
   gameStartedAt: 0,
   unity: null,
   unityLoading: null,
@@ -274,10 +273,8 @@ function renderScenarios() {
       <p>${s.description ? escapeHtml(s.description) : "<i style='opacity:.5'>Без описания</i>"}</p>
       <div class="actions">
         <button class="play" type="button">▶ Играть</button>
-        <button class="board ghost" type="button">🏆 Рейтинг</button>
       </div>`;
-    card.querySelector(".play").addEventListener("click",  () => startScenario(s));
-    card.querySelector(".board").addEventListener("click", () => openLeaderboard(s));
+    card.querySelector(".play").addEventListener("click", () => startScenario(s));
     grid.appendChild(card);
   }
 
@@ -1013,8 +1010,6 @@ async function ensureUnity() {
   }).then((inst) => {
     State.unity = inst;
     loading.style.display = "none";
-    // Регистрируем instance в мосте; если Unity уже вызвала unityReady,
-    // очередь сразу прольётся, если нет — будет ждать сигнала.
     GameBridge.setUnity(inst, CONFIG.UNITY_OBJECT);
     return inst;
   }).catch((err) => {
@@ -1027,9 +1022,13 @@ async function ensureUnity() {
   return State.unityLoading;
 }
 
+/**
+ * Запуск сценария.
+ * POST /scenarios/start больше не вызывается — серверная запись создаётся
+ * только в момент finish. Всё, что нужно Unity, передаётся в OnScenarioStarted.
+ */
 async function startScenario(scenario) {
   State.activeScenario = scenario;
-  State.activeResultId = null;
   $("#hud-scenario").textContent = scenario.name;
   $("#hud-timer").textContent = "00:00";
 
@@ -1043,54 +1042,50 @@ async function startScenario(scenario) {
   }
 
   showGameStart(false);
+  State.gameStartedAt = performance.now();
+  startTimer();
 
-  try {
-    // 1) Сообщаем серверу, что начинаем сценарий → получаем result_id
-    const res = await api(CONFIG.SCENARIOS.start, {
-      method: "POST",
-      body: { scenario_uuid: scenario.scenario_uuid },
-    });
-    State.activeResultId = res.id;
-    State.gameStartedAt = performance.now();
-    startTimer();
-
-    // 2) Передаём в Unity всё, что нужно для запуска сценария.
-    //    Если Unity ещё не вызвала unityReady() — сообщение встанет в очередь.
-    GameBridge.send("OnScenarioStarted", {
-      result_id:     res.id,
-      scenario_uuid: scenario.scenario_uuid,
-      scenario_name: scenario.name,
-      scenario_description: scenario.description || null,
-      user: State.user ? {
-        user_uuid:   State.user.user_uuid,
-        email:       State.user.email,
-        first_name:  State.user.first_name,
-        second_name: State.user.second_name,
-        third_name:  State.user.third_name || null,
-        level:       levelFromXp(extractXp(State.user)),
-        xp:          extractXp(State.user),
-      } : null,
-    });
-  } catch (ex) {
-    toast("Не удалось начать сценарий: " + ex.message, "err");
-    showGameStart(true);
-  }
+  // Передаём Unity всё, что нужно для старта. Если Unity ещё не готова —
+  // сообщение встанет в очередь GameBridge и уйдёт после unityReady().
+  GameBridge.send("OnScenarioStarted", {
+    scenario_uuid: scenario.scenario_uuid,
+    scenario_name: scenario.name,
+    scenario_description: scenario.description || null,
+    user: State.user ? {
+      user_uuid:   State.user.user_uuid,
+      email:       State.user.email,
+      first_name:  State.user.first_name,
+      second_name: State.user.second_name,
+      third_name:  State.user.third_name || null,
+      level:       levelFromXp(extractXp(State.user)),
+      xp:          extractXp(State.user),
+    } : null,
+  });
 }
 
+/**
+ * Возврат к списку сценариев: прячем игровое полотно, показываем overlay
+ * со сценариями. Используется и при выходе игрока, и после finish.
+ */
+function returnToScenarioList() {
+  stopTimer();
+  showGameStart(true);
+  switchToScreen("game");
+}
+
+/** Игрок нажал «Сменить сценарий» — уведомляем Unity и возвращаемся в меню. */
 function leaveGame() {
-  // Сообщаем Unity, что игрок вышел из сценария
   GameBridge.send("OnScenarioStop", {
     reason: "user_exit",
     scenario_uuid: State.activeScenario?.scenario_uuid || null,
   });
   resetGame();
-  showGameStart(true);
+  returnToScenarioList();
 }
 
 function resetGame() {
   stopTimer();
   State.activeScenario = null;
-  State.activeResultId = null;
 }
 
 function startTimer() {
@@ -1107,7 +1102,12 @@ function stopTimer() {
 
 /* ============ РЕГИСТРАЦИЯ ОБРАБОТЧИКОВ UNITY → FRONTEND ========= */
 function registerBridgeHandlers() {
-  /* --- Финал сценария: Unity → Frontend → API --- */
+  /* --- Финал сценария: Unity → Frontend → API ---
+   *  Unity в конце сценария вызывает из jslib GP_Finish(json),
+   *  jslib парсит JSON и вызывает window.GamePlatform.finish(payload).
+   *  Мы формируем тело из 4 полей и шлём POST /scenarios/finish.
+   *  После успешного сохранения — возвращаем список сценариев.
+   */
   GameBridge.on("finish", async (payload) => {
     let p = payload;
     if (typeof p === "string") {
@@ -1116,17 +1116,22 @@ function registerBridgeHandlers() {
     }
     if (!p || typeof p !== "object") throw new Error("Пустой payload");
 
-    if (!State.activeResultId) throw new Error("Сценарий не запущен");
+    if (!State.activeScenario) throw new Error("Сценарий не запущен");
 
     const duration = p.duration_playtime ??
       Math.round((performance.now() - State.gameStartedAt) / 1000);
 
+    // result_json приводим к строке — серверное ТЗ требует строку
+    let resultJson = p.result_json ?? "";
+    if (typeof resultJson !== "string") {
+      try { resultJson = JSON.stringify(resultJson); } catch { resultJson = ""; }
+    }
+
     const body = {
-      result_id:          State.activeResultId,
-      passenger_loyality: Math.max(0, Math.round(p.passenger_loyality || 0)),
-      security_rating:    Math.max(0, Math.round(p.security_rating    || 0)),
-      duration_playtime:  Math.max(0, Math.round(duration)),
-      result_json:        p.result_json ?? null,
+      passenger_loyality: Math.max(0, Math.round(Number(p.passenger_loyality) || 0)),
+      security_rating:    Math.max(0, Math.round(Number(p.security_rating)    || 0)),
+      duration_playtime:  Math.max(0, Math.round(Number(duration)             || 0)),
+      result_json:        resultJson,
     };
 
     console.log("[GamePlatform] finish → API", body);
@@ -1143,14 +1148,21 @@ function registerBridgeHandlers() {
     stopTimer();
     toast("Результат сохранён", "ok");
 
+    const finishedUuid = State.activeScenario?.scenario_uuid || null;
+
+    // Сообщаем Unity об успехе, пока мост жив
     GameBridge.send("OnResultSaved", {
-      result_id:       State.activeResultId,
-      scenario_uuid:   State.activeScenario?.scenario_uuid || null,
+      scenario_uuid: finishedUuid,
       server_response: res,
     });
 
-    // Сбросим кэш — при следующем входе список прохождений перечитается
+    // Сбрасываем кэш — при следующем заходе список прохождений перечитается
     State.myResults = [];
+
+    // Прячем игру и показываем список сценариев для нового запуска
+    resetGame();
+    returnToScenarioList();
+
     return res;
   });
 
@@ -1176,7 +1188,6 @@ function registerBridgeHandlers() {
   GameBridge.on("state", () => ({
     user: State.user,
     scenario: State.activeScenario,
-    result_id: State.activeResultId,
     unity_ready: GameBridge.isReady(),
   }));
 
@@ -1278,7 +1289,7 @@ $("#form-register")?.addEventListener("submit", async (e) => {
 $("#btn-logout")?.addEventListener("click", () => {
   logout();
   resetGame();
-  GameBridge.reset();     // ← сброс очереди и флага готовности
+  GameBridge.reset();
   setAuthed(false);
   showGameStart(true);
   setLeaderboardHint();

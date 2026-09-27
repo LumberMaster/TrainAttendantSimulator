@@ -82,11 +82,21 @@ namespace Game
             // Стартовый этап
             if (_currentStage != null)
             {
+                // Сбрасываем накопленные сообщения этапа — важно при повторном запуске,
+                // т.к. ScriptableObject переживает между запусками в редакторе.
+                _currentStage.ResetReceivedMessages();
+
                 OnStartStage.Invoke(_currentStage);
                 DispatchMessages(_currentStage.onStartStageMessages);
 
                 if (_currentStage.audioClip != null)
                     PlayAudio(_currentStage.audioClip);
+
+                // Если стартовый этап помечен как конечный — сразу завершаем сценарий.
+                if (_currentStage.IsEndStage)
+                {
+                    EndScenario();
+                }
             }
         }
 
@@ -98,6 +108,8 @@ namespace Game
             {
                 OnEndStage.Invoke(_currentStage);
                 DispatchMessages(_currentStage.onEndStageMessages);
+
+                _currentStage.ResetReceivedMessages();
             }
 
             OnEndScenario.Invoke(_currentScenario);
@@ -114,6 +126,8 @@ namespace Game
 
             if (_currentScenario == null || _currentStage == null) return;
 
+            // ScenarioStage сам копит сообщения и проверяет все условия
+            // всех переходов текущего этапа.
             ScenarioStageTransition transition = _currentStage.RecieveMessage(message);
             if (transition == null) return;
 
@@ -151,11 +165,24 @@ namespace Game
 
             _currentStage = nextStage;
 
+            // Сбрасываем накопленные сообщения нового этапа.
+            // (Предыдущий этап уже очистил свои в ScenarioStage.RecieveMessage.)
+            _currentStage.ResetReceivedMessages();
+
             OnStartStage.Invoke(_currentStage);
             DispatchMessages(_currentStage.onStartStageMessages);
 
             if (_currentStage.audioClip != null)
                 PlayAudio(_currentStage.audioClip);
+
+            // Достигли конечного этапа — сценарий завершён.
+            if (_currentStage.IsEndStage)
+            {
+                if (IsDebug)
+                    Debug.Log("Scenario -> end stage reached: " + _currentStage.stageName);
+
+                EndScenario();
+            }
         }
 
         private void DispatchMessages(IReadOnlyList<ScenarioUnitMessage> messages)

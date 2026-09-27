@@ -16,92 +16,40 @@ MonoBehaviour:
   scenarioName: 
   description: 
   stages:
-  - stageName: 
+  - stageName: StartStage
     stageNameDisplay: 
     description: 
     audioClip: {fileID: 0}
+    IsEndStage: 0
     transitions:
-    - ScenarioUnitName: 
-      ScenarioMessage: 
+    - conditions:
+      - ScenarioUnitName: NPC_1
+        ScenarioMessage: DialogEnd
+      - ScenarioUnitName: NPC_2
+        ScenarioMessage: DialogEnd
+      - ScenarioUnitName: NPC_3
+        ScenarioMessage: DialogEnd
+      - ScenarioUnitName: NPC_4
+        ScenarioMessage: DialogEnd
+      - ScenarioUnitName: NPC_5
+        ScenarioMessage: DialogEnd
+      ScenarioNextStage: EndStage
+      onTransitMessages: []
+    onStartStageMessages: []
+    onEndStageMessages: []
+  - stageName: EndStage
+    stageNameDisplay: 
+    description: 
+    audioClip: {fileID: 0}
+    IsEndStage: 1
+    transitions:
+    - conditions: []
       ScenarioNextStage: 
       onTransitMessages:
       - ScenarioUnitName: 
         ScenarioMessage: 
     onStartStageMessages: []
     onEndStageMessages: []
-  - stageName: 
-    stageNameDisplay: 
-    description: 
-    audioClip: {fileID: 0}
-    transitions: []
-    onStartStageMessages: []
-    onEndStageMessages: []
-  - stageName: 
-    stageNameDisplay: 
-    description: 
-    audioClip: {fileID: 0}
-    transitions: []
-    onStartStageMessages: []
-    onEndStageMessages: []
-  - stageName: 
-    stageNameDisplay: 
-    description: 
-    audioClip: {fileID: 0}
-    transitions: []
-    onStartStageMessages: []
-    onEndStageMessages: []
-  - stageName: 
-    stageNameDisplay: 
-    description: 
-    audioClip: {fileID: 0}
-    transitions: []
-    onStartStageMessages: []
-    onEndStageMessages: []
-  - stageName: 
-    stageNameDisplay: 
-    description: 
-    audioClip: {fileID: 0}
-    transitions: []
-    onStartStageMessages: []
-    onEndStageMessages: []
-  - stageName: 
-    stageNameDisplay: 
-    description: 
-    audioClip: {fileID: 0}
-    transitions: []
-    onStartStageMessages: []
-    onEndStageMessages: []
-  - stageName: 
-    stageNameDisplay: 
-    description: 
-    audioClip: {fileID: 0}
-    transitions: []
-    onStartStageMessages: []
-    onEndStageMessages: []
-  - stageName: 
-    stageNameDisplay: 
-    description: 
-    audioClip: {fileID: 0}
-    transitions: []
-    onStartStageMessages: []
-    onEndStageMessages: []
-  - stageName: 
-    stageNameDisplay: 
-    description: 
-    audioClip: {fileID: 0}
-    transitions:
-    - ScenarioUnitName: 
-      ScenarioMessage: 
-      ScenarioNextStage: 
-      onTransitMessages:
-      - ScenarioUnitName: 
-        ScenarioMessage: 
-    onStartStageMessages:
-    - ScenarioUnitName: 
-      ScenarioMessage: 
-    onEndStageMessages:
-    - ScenarioUnitName: 
-      ScenarioMessage: 
   onStartScenarioMessages:
   - ScenarioUnitName: 
     ScenarioMessage: 

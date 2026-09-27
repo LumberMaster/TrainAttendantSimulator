@@ -96,7 +96,9 @@ namespace Game
                     var stageData = new ScenarioStageJsonData
                     {
                         stageName = s.stageName,
+                        stageNameDisplay = s.stageNameDisplay,
                         description = s.description,
+                        isEndStage = s.IsEndStage,
                         audioClipPath = s.audioClip != null ? AssetDatabase.GetAssetPath(s.audioClip) : string.Empty,
                         onStartStageMessages = CloneMessages(s.onStartStageMessages),
                         onEndStageMessages = CloneMessages(s.onEndStageMessages),
@@ -111,8 +113,7 @@ namespace Game
 
                             stageData.transitions.Add(new ScenarioStageTransitionJsonData
                             {
-                                ScenarioUnitName = t.ScenarioUnitName,
-                                ScenarioMessage = t.ScenarioMessage,
+                                conditions = CloneConditions(t.conditions),
                                 ScenarioNextStage = t.ScenarioNextStage,
                                 onTransitMessages = CloneMessages(t.onTransitMessages)
                             });
@@ -146,7 +147,9 @@ namespace Game
                     var stage = new ScenarioStage
                     {
                         stageName = sd.stageName,
+                        stageNameDisplay = sd.stageNameDisplay,
                         description = sd.description,
+                        IsEndStage = sd.isEndStage,
                         audioClip = string.IsNullOrEmpty(sd.audioClipPath)
                             ? null
                             : AssetDatabase.LoadAssetAtPath<AudioClip>(sd.audioClipPath),
@@ -161,13 +164,26 @@ namespace Game
                         {
                             if (td == null) continue;
 
-                            stage.transitions.Add(new ScenarioStageTransition
+                            var transition = new ScenarioStageTransition
                             {
-                                ScenarioUnitName = td.ScenarioUnitName,
-                                ScenarioMessage = td.ScenarioMessage,
                                 ScenarioNextStage = td.ScenarioNextStage,
-                                onTransitMessages = CloneMessages(td.onTransitMessages)
-                            });
+                                onTransitMessages = CloneMessages(td.onTransitMessages),
+                                conditions = CloneConditions(td.conditions)
+                            };
+
+                            // Миграция со старого формата (одиночное условие).
+                            if (transition.conditions.Count == 0
+                                && (!string.IsNullOrEmpty(td.ScenarioUnitName)
+                                    || !string.IsNullOrEmpty(td.ScenarioMessage)))
+                            {
+                                transition.conditions.Add(new ScenarioTransitionCondition
+                                {
+                                    ScenarioUnitName = td.ScenarioUnitName,
+                                    ScenarioMessage = td.ScenarioMessage
+                                });
+                            }
+
+                            stage.transitions.Add(transition);
                         }
                     }
 
@@ -193,6 +209,25 @@ namespace Game
 
             return result;
         }
+
+        private static List<ScenarioTransitionCondition> CloneConditions(
+            List<ScenarioTransitionCondition> source)
+        {
+            var result = new List<ScenarioTransitionCondition>();
+            if (source == null) return result;
+
+            foreach (var c in source)
+            {
+                if (c == null) continue;
+                result.Add(new ScenarioTransitionCondition
+                {
+                    ScenarioUnitName = c.ScenarioUnitName,
+                    ScenarioMessage = c.ScenarioMessage
+                });
+            }
+
+            return result;
+        }
 #endif
     }
 
@@ -212,19 +247,74 @@ namespace Game
 
         public string description;
         public AudioClip audioClip;
+
+        [Tooltip("Если включено — при входе на этот этап сценарий автоматически завершается.")]
+        public bool IsEndStage;
+
         public List<ScenarioStageTransition> transitions = new List<ScenarioStageTransition>();
 
         [Header("Messages dispatched on stage events")]
         public List<ScenarioUnitMessage> onStartStageMessages = new List<ScenarioUnitMessage>();
         public List<ScenarioUnitMessage> onEndStageMessages = new List<ScenarioUnitMessage>();
 
+        // Накапливаемые сообщения текущего этапа (для многоусловных переходов).
+        // [NonSerialized] — не попадает ни в ScriptableObject-ассет, ни в JSON.
+        [NonSerialized] private List<ScenarioMessage> receivedMessages = new List<ScenarioMessage>();
+
+        public IReadOnlyList<ScenarioMessage> ReceivedMessages => receivedMessages;
+
+        /// <summary>Сброс накопленных сообщений. Вызывается при входе на этап.</summary>
+        public void ResetReceivedMessages()
+        {
+            if (receivedMessages == null)
+                receivedMessages = new List<ScenarioMessage>();
+            else
+                receivedMessages.Clear();
+        }
+
+        /// <summary>
+        /// Принимает сообщение, копит его и проверяет, не выполнены ли
+        /// условия какого-либо перехода. Возвращает первый сработавший
+        /// переход либо null.
+        /// </summary>
         public ScenarioStageTransition RecieveMessage(ScenarioMessage message)
         {
+            if (receivedMessages == null)
+                receivedMessages = new List<ScenarioMessage>();
+
+            if (message != null)
+                receivedMessages.Add(message);
+
+            if (transitions == null) return null;
+
             foreach (var transition in transitions)
-                if (transition.Matches(message))
+            {
+                if (transition != null && transition.Matches(receivedMessages))
+                {
+                    // Переход сработал — сбрасываем накопленное,
+                    // чтобы следующий этап начал «с чистого листа».
+                    receivedMessages.Clear();
                     return transition;
+                }
+            }
 
             return null;
+        }
+    }
+
+
+    /// <summary>Одно условие перехода: конкретный объект должен прислать конкретное сообщение.</summary>
+    [Serializable]
+    public class ScenarioTransitionCondition
+    {
+        public string ScenarioUnitName;
+        public string ScenarioMessage;
+
+        public bool Matches(ScenarioMessage message)
+        {
+            if (message == null) return false;
+            return message.scenarioUnitName == ScenarioUnitName
+                && message.scenarioUnitMessage == ScenarioMessage;
         }
     }
 
@@ -232,17 +322,41 @@ namespace Game
     [Serializable]
     public class ScenarioStageTransition
     {
-        public string ScenarioUnitName;
-        public string ScenarioMessage;
+        [Tooltip("Все условия должны быть выполнены, чтобы сработал переход.")]
+        public List<ScenarioTransitionCondition> conditions = new List<ScenarioTransitionCondition>();
+
         public string ScenarioNextStage;
 
         [Header("Messages dispatched on transition")]
         public List<ScenarioUnitMessage> onTransitMessages = new List<ScenarioUnitMessage>();
 
-        public bool Matches(ScenarioMessage message)
+        /// <summary>
+        /// Проверяет, что среди уже полученных сообщений есть хотя бы по одному,
+        /// удовлетворяющему каждому условию перехода.
+        /// </summary>
+        public bool Matches(IReadOnlyList<ScenarioMessage> receivedMessages)
         {
-            if (message.scenarioUnitName != ScenarioUnitName) return false;
-            if (message.scenarioUnitMessage != ScenarioMessage) return false;
+            if (conditions == null || conditions.Count == 0) return false;
+            if (receivedMessages == null) return false;
+
+            for (int c = 0; c < conditions.Count; c++)
+            {
+                var cond = conditions[c];
+                if (cond == null) continue;
+
+                bool satisfied = false;
+                for (int i = 0; i < receivedMessages.Count; i++)
+                {
+                    if (cond.Matches(receivedMessages[i]))
+                    {
+                        satisfied = true;
+                        break;
+                    }
+                }
+
+                if (!satisfied) return false;
+            }
+
             return true;
         }
     }
@@ -275,7 +389,9 @@ namespace Game
     public class ScenarioStageJsonData
     {
         public string stageName;
+        public string stageNameDisplay;
         public string description;
+        public bool isEndStage;
         public string audioClipPath;
         public List<ScenarioStageTransitionJsonData> transitions = new List<ScenarioStageTransitionJsonData>();
         public List<ScenarioUnitMessage> onStartStageMessages = new List<ScenarioUnitMessage>();
@@ -285,10 +401,13 @@ namespace Game
     [Serializable]
     public class ScenarioStageTransitionJsonData
     {
-        public string ScenarioUnitName;
-        public string ScenarioMessage;
+        public List<ScenarioTransitionCondition> conditions = new List<ScenarioTransitionCondition>();
         public string ScenarioNextStage;
         public List<ScenarioUnitMessage> onTransitMessages = new List<ScenarioUnitMessage>();
+
+        // LEGACY: поддержка старых JSON с одиночным условием.
+        public string ScenarioUnitName;
+        public string ScenarioMessage;
     }
 
 

@@ -297,10 +297,21 @@ namespace Game
     [CustomEditor(typeof(DialogAsset))]
     public class DialogAssetEditor : Editor
     {
+        private const string KnownRolesPrefsKey = "DialogAsset.KnownRoles";
+
+        // Поля редактора — сохраняются между перерисовками инспектора.
+        private string _currentFromRole = string.Empty;
+        private string _replaceToRole = string.Empty;
+        private bool _replaceInTransitions = true;
+        private string _newKnownRole = string.Empty;
+
         public override void OnInspectorGUI()
         {
             var dialog = (DialogAsset)target;
 
+            DrawRoleReplaceSection(dialog);
+
+            EditorGUILayout.Space();
             DrawDefaultInspector();
 
             EditorGUILayout.Space();
@@ -332,6 +343,207 @@ namespace Game
                 }
             }
         }
+
+        // =====================================================================
+        //  Replace NPC role
+        // =====================================================================
+
+        private static List<string> CollectRoleIds(DialogAsset dialog)
+        {
+            var set = new HashSet<string>();
+
+            // 1) Роли, уже встречающиеся в диалоге.
+            if (dialog != null && dialog.lines != null)
+            {
+                foreach (var l in dialog.lines)
+                {
+                    if (l == null) continue;
+                    if (!string.IsNullOrEmpty(l.roleId)) set.Add(l.roleId);
+
+                    if (l.transitions != null)
+                    {
+                        foreach (var t in l.transitions)
+                        {
+                            if (t == null) continue;
+                            if (!string.IsNullOrEmpty(t.speakerRoleId)) set.Add(t.speakerRoleId);
+                        }
+                    }
+                }
+            }
+
+            // 2) Роли, добавленные пользователем вручную (общий список в EditorPrefs).
+            foreach (var r in LoadKnownRoles())
+                if (!string.IsNullOrEmpty(r)) set.Add(r);
+
+            var list = new List<string>(set);
+            list.Sort(StringComparer.Ordinal);
+            return list;
+        }
+
+        private static List<string> LoadKnownRoles()
+        {
+            string raw = EditorPrefs.GetString(KnownRolesPrefsKey, string.Empty);
+            if (string.IsNullOrEmpty(raw)) return new List<string>();
+
+            var result = new List<string>();
+            foreach (var s in raw.Split('\n'))
+            {
+                var v = s.Trim();
+                if (v.Length > 0) result.Add(v);
+            }
+            return result;
+        }
+
+        private static void SaveKnownRoles(List<string> roles)
+        {
+            EditorPrefs.SetString(KnownRolesPrefsKey, string.Join("\n", roles));
+        }
+
+        private void DrawRoleReplaceSection(DialogAsset dialog)
+        {
+            EditorGUILayout.LabelField("Replace NPC role", EditorStyles.boldLabel);
+
+            var roles = CollectRoleIds(dialog);
+            if (roles.Count == 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "В диалоге ещё нет ни одной роли (roleId / speakerRoleId). " +
+                    "Добавь роль вручную ниже или заполни реплики.",
+                    MessageType.Info);
+            }
+
+            // --- Список "из кого" ---
+            if (roles.Count > 0)
+            {
+                int currentIdx = Mathf.Max(0, roles.IndexOf(_currentFromRole));
+                currentIdx = EditorGUILayout.Popup("From role", currentIdx, roles.ToArray());
+                _currentFromRole = roles[currentIdx];
+            }
+            else
+            {
+                _currentFromRole = EditorGUILayout.TextField("From role", _currentFromRole);
+            }
+
+            _replaceToRole = EditorGUILayout.TextField("To role", _replaceToRole);
+            _replaceInTransitions = EditorGUILayout.Toggle("Also in transitions", _replaceInTransitions);
+
+            bool canApply = !string.IsNullOrEmpty(_currentFromRole)
+                            && !string.IsNullOrEmpty(_replaceToRole)
+                            && _currentFromRole != _replaceToRole;
+
+            using (new EditorGUI.DisabledScope(!canApply))
+            {
+                if (GUILayout.Button("Replace in all lines"))
+                {
+                    int changed = ReplaceRole(dialog, _currentFromRole, _replaceToRole, _replaceInTransitions);
+                    Debug.Log($"[DialogAsset] Replaced '{_currentFromRole}' -> '{_replaceToRole}' " +
+                              $"({changed} occurrence(s)).");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(_replaceToRole) && _replaceToRole == _currentFromRole)
+            {
+                EditorGUILayout.HelpBox("Новое имя роли совпадает со старым.", MessageType.Warning);
+            }
+
+            // --- Реестр известных NPC (чтобы ими можно было заменять) ---
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Known NPC roles (editor-wide)", EditorStyles.miniBoldLabel);
+
+            var known = LoadKnownRoles();
+            if (known.Count > 0)
+            {
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    for (int i = 0; i < known.Count; i++)
+                    {
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            EditorGUILayout.LabelField(known[i]);
+                            GUILayout.FlexibleSpace();
+                            if (GUILayout.Button("→ To role", GUILayout.Width(80)))
+                            {
+                                _replaceToRole = known[i];
+                            }
+                            if (GUILayout.Button("✕", GUILayout.Width(24)))
+                            {
+                                known.RemoveAt(i);
+                                SaveKnownRoles(known);
+                                GUIUtility.ExitGUI();
+                            }
+                        }
+                    }
+                }
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                _newKnownRole = EditorGUILayout.TextField(_newKnownRole);
+                using (new EditorGUI.DisabledScope(string.IsNullOrEmpty(_newKnownRole)))
+                {
+                    if (GUILayout.Button("Add role", GUILayout.Width(80)))
+                    {
+                        var list = LoadKnownRoles();
+                        var trimmed = _newKnownRole.Trim();
+                        if (!list.Contains(trimmed))
+                        {
+                            list.Add(trimmed);
+                            SaveKnownRoles(list);
+                        }
+                        _newKnownRole = string.Empty;
+                        GUIUtility.ExitGUI();
+                    }
+                }
+            }
+        }
+
+        private static int ReplaceRole(DialogAsset dialog, string fromRole, string toRole, bool includeTransitions)
+        {
+            if (string.IsNullOrEmpty(fromRole) || string.IsNullOrEmpty(toRole) || fromRole == toRole)
+                return 0;
+
+            Undo.RecordObject(dialog, "Replace dialog role");
+            int changed = 0;
+
+            if (dialog.lines != null)
+            {
+                foreach (var l in dialog.lines)
+                {
+                    if (l == null) continue;
+
+                    if (l.roleId == fromRole)
+                    {
+                        l.roleId = toRole;
+                        changed++;
+                    }
+
+                    if (includeTransitions && l.transitions != null)
+                    {
+                        foreach (var t in l.transitions)
+                        {
+                            if (t == null) continue;
+                            if (t.speakerRoleId == fromRole)
+                            {
+                                t.speakerRoleId = toRole;
+                                changed++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (changed > 0)
+            {
+                EditorUtility.SetDirty(dialog);
+                AssetDatabase.SaveAssets();
+            }
+
+            return changed;
+        }
+
+        // =====================================================================
+        //  JSON file io
+        // =====================================================================
 
         private static void ExportToFile(DialogAsset dialog)
         {

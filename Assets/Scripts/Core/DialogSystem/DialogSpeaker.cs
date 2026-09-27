@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Game
 {
@@ -32,6 +33,13 @@ namespace Game
         [Tooltip("Если пусто — сообщение о старте диалога не отправляется.")]
         [SerializeField] private string onDialogStartMessage = "DialogStart";
 
+        [Header("Unity Events")]
+        [Tooltip("Вызывается при старте диалога с этим спикером.")]
+        [SerializeField] private UnityEvent onDialogStart = new UnityEvent();
+
+        [Tooltip("Вызывается при завершении диалога с этим спикером.")]
+        [SerializeField] private UnityEvent onDialogEnd = new UnityEvent();
+
         public string SpeakerId => speakerId;
         public AudioSource AudioSource => audioSource;
         public ScenarioUnit ScenarioUnit => scenarioUnit;
@@ -39,6 +47,9 @@ namespace Game
         public string UnitName => scenarioUnit != null ? scenarioUnit.ScenarioUnitName : string.Empty;
         public string OnDialogEndMessage => onDialogEndMessage;
         public string OnDialogStartMessage => onDialogStartMessage;
+
+        public UnityEvent OnDialogStart => onDialogStart;
+        public UnityEvent OnDialogEnd => onDialogEnd;
 
         private void Awake()
         {
@@ -67,8 +78,29 @@ namespace Game
                 return;
             }
             DialogSystem.Instance.StartDialog(this, dialogId);
+            NotifyDialogStarted();
         }
 
-        public void StopDialog() => DialogSystem.Instance?.StopDialog();
+        public void StopDialog()
+        {
+            DialogSystem.Instance?.StopDialog();
+            NotifyDialogEnded();
+        }
+
+        /// <summary>
+        /// Вызывается извне (например, DialogSystem) при старте диалога.
+        /// </summary>
+        public void NotifyDialogStarted()
+        {
+            onDialogStart?.Invoke();
+        }
+
+        /// <summary>
+        /// Вызывается извне (например, DialogSystem) при завершении диалога.
+        /// </summary>
+        public void NotifyDialogEnded()
+        {
+            onDialogEnd?.Invoke();
+        }
     }
 }

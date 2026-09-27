@@ -38,8 +38,8 @@ MonoBehaviour:
       \u041A\u0430\u043A \u043C\u043D\u0435 \u0431\u044B\u0442\u044C?"
     audio: {fileID: 0}
     isEnd: 0
-    useTimer: 0
-    timerDuration: 0
+    useTimer: 1
+    timerDuration: 10
     transitions:
     - choiceText: "\u042F \u0412\u0430\u0441 \u043F\u043E\u043D\u0438\u043C\u0430\u044E.
         \u041F\u043E\u0437\u0432\u043E\u043B\u044C\u0442\u0435 \u043E\u0431\u0440\u0430\u0442\u0438\u0442\u044C
@@ -94,8 +94,8 @@ MonoBehaviour:
       \u043F\u043E \u0444\u0430\u043C\u0438\u043B\u0438\u0438?"
     audio: {fileID: 0}
     isEnd: 0
-    useTimer: 0
-    timerDuration: 0
+    useTimer: 1
+    timerDuration: 10
     transitions:
     - choiceText: "\u042F \u043F\u0440\u0438\u0433\u043B\u0430\u0448\u0443 \u043D\u0430\u0447\u0430\u043B\u044C\u043D\u0438\u043A\u0430
         \u043F\u043E\u0435\u0437\u0434\u0430, \u043E\u043D \u0441\u043C\u043E\u0436\u0435\u0442
@@ -144,8 +144,8 @@ MonoBehaviour:
       \u043C\u0435\u043D\u044F \u0432\u044B\u0441\u0430\u0434\u044F\u0442?"
     audio: {fileID: 0}
     isEnd: 0
-    useTimer: 0
-    timerDuration: 0
+    useTimer: 1
+    timerDuration: 10
     transitions:
     - choiceText: "\u041F\u043E\u0437\u0432\u043E\u043B\u044C\u0442\u0435 \u043E\u0431\u0440\u0430\u0442\u0438\u0442\u044C
         \u0412\u0430\u0448\u0435 \u0432\u043D\u0438\u043C\u0430\u043D\u0438\u0435
@@ -192,8 +192,8 @@ MonoBehaviour:
       \u042F \u0437\u0430\u043F\u043B\u0430\u0442\u0438\u043B \u0434\u0435\u043D\u044C\u0433\u0438!"
     audio: {fileID: 0}
     isEnd: 0
-    useTimer: 0
-    timerDuration: 0
+    useTimer: 1
+    timerDuration: 10
     transitions:
     - choiceText: "\u0411\u043B\u0430\u0433\u043E\u0434\u0430\u0440\u044E \u0437\u0430
         \u043E\u0431\u0440\u0430\u0449\u0435\u043D\u0438\u0435. \u042F \u043F\u0440\u0438\u0433\u043B\u0430\u0448\u0443
@@ -241,8 +241,8 @@ MonoBehaviour:
       \u0432\u043E\u043F\u0440\u043E\u0441."
     audio: {fileID: 0}
     isEnd: 1
-    useTimer: 0
-    timerDuration: 0
+    useTimer: 1
+    timerDuration: 10
     transitions: []
   - id: line_6_npc2_final_service_2
     roleId: NPC_5
@@ -268,8 +268,8 @@ MonoBehaviour:
     text: "\u0425\u043E\u0440\u043E\u0448\u043E, \u0436\u0434\u0443 \u043D\u0430\u0447\u0430\u043B\u044C\u043D\u0438\u043A\u0430."
     audio: {fileID: 0}
     isEnd: 1
-    useTimer: 0
-    timerDuration: 0
+    useTimer: 1
+    timerDuration: 10
     transitions: []
   - id: line_9_npc2_final_informative_2
     roleId: NPC_5
@@ -296,8 +296,8 @@ MonoBehaviour:
       \u044F \u043D\u0438\u043A\u0443\u0434\u0430 \u043D\u0435 \u0443\u0439\u0434\u0443."
     audio: {fileID: 0}
     isEnd: 1
-    useTimer: 0
-    timerDuration: 0
+    useTimer: 1
+    timerDuration: 10
     transitions: []
   - id: line_12_npc2_final_strict_2
     roleId: NPC_5
@@ -314,6 +314,6 @@ MonoBehaviour:
       \u043D\u0430 \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0439 \u0441\u0442\u0430\u043D\u0446\u0438\u0438."
     audio: {fileID: 0}
     isEnd: 1
-    useTimer: 0
-    timerDuration: 0
+    useTimer: 1
+    timerDuration: 10
     transitions: []

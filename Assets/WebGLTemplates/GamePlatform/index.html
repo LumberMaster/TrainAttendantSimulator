@@ -61,19 +61,30 @@
   </div>
 </section>
 
-<!-- ================= GAME + LEADERBOARD ================= -->
-<section id="screen-game" class="screen">
-  <header class="topbar">
-    <div class="logo" style="font-size:16px">🎮 Game Platform</div>
-    <div class="spacer"></div>
+<!-- ================= GLOBAL TOPBAR ================= -->
+<header class="topbar" id="app-topbar">
+  <div class="logo" style="font-size:16px">🎮 Game Platform</div>
+
+  <nav class="app-nav" id="app-nav">
+    <button type="button" data-nav="game" class="active">Игра</button>
+    <button type="button" data-nav="results">Прохождения</button>
+    <button type="button" data-nav="profile">Профиль</button>
+  </nav>
+
+  <div class="spacer"></div>
+
+  <div class="game-hud" id="game-hud">
     <div>Сценарий: <b id="hud-scenario">—</b></div>
     <div>Время: <b id="hud-timer">00:00</b></div>
     <button class="ghost" id="game-back" type="button">Сменить сценарий</button>
-    <button class="ghost" id="btn-my-results" type="button">Мои результаты</button>
-    <div class="user" id="user-info"></div>
-    <button class="ghost" id="btn-logout" type="button">Выйти</button>
-  </header>
+  </div>
 
+  <div class="user" id="user-info"></div>
+  <button class="ghost" id="btn-logout" type="button">Выйти</button>
+</header>
+
+<!-- ================= GAME + LEADERBOARD ================= -->
+<section id="screen-game" class="screen">
   <div class="game-layout">
 
     <!-- ---- игровой блок ---- -->
@@ -111,16 +122,38 @@
   </div>
 </section>
 
-<!-- ================= RESULTS MODAL ================= -->
-<div id="results-modal" class="modal" aria-hidden="true">
-  <div class="modal-card">
-    <div class="modal-head">
-      <h2 id="results-title">Результаты</h2>
-      <button class="ghost" id="results-close" type="button">Закрыть</button>
+<!-- ================= RESULTS LIST ================= -->
+<section id="screen-results" class="screen">
+  <div class="page">
+    <div class="page-head">
+      <h2>Мои прохождения</h2>
+      <div class="spacer"></div>
+      <button class="ghost" id="results-refresh" type="button">↻ Обновить</button>
     </div>
-    <div id="results-body"></div>
+    <div id="results-list"></div>
   </div>
-</div>
+</section>
+
+<!-- ================= RESULT DETAIL ================= -->
+<section id="screen-result" class="screen">
+  <div class="page">
+    <div class="page-head">
+      <button class="ghost" id="result-back" type="button">← К списку</button>
+      <h2 id="result-title">Прохождение</h2>
+    </div>
+    <div id="result-detail"></div>
+  </div>
+</section>
+
+<!-- ================= PROFILE ================= -->
+<section id="screen-profile" class="screen">
+  <div class="page">
+    <div class="page-head">
+      <h2>Профиль игрока</h2>
+    </div>
+    <div id="profile-content"></div>
+  </div>
+</section>
 
 <div id="toast"></div>
 

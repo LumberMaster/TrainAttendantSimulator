@@ -93,7 +93,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 20201, guid: 0000000000000000f000000000000000, type: 0}
+  m_LightingDataAsset: {fileID: 112000000, guid: 766ba893b27ec314ea3558895b33e000, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: a6aafea730b4d63459eb0c2f820abb38, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -2436,6 +2436,17 @@ Transform:
   - {fileID: 620033786}
   m_Father: {fileID: 1181270861}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &235812169 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2680324840422536166, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+  m_PrefabInstance: {fileID: 981041980773911745}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1 &241252766
 GameObject:
   m_ObjectHideFlags: 0
@@ -4144,7 +4155,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
-    m_Type: 2
+    m_Type: 0
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -4177,7 +4188,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 2
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
@@ -14080,6 +14091,17 @@ Transform:
   - {fileID: 2095438954}
   m_Father: {fileID: 1981833199}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1278639320 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5070958263633215516, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+  m_PrefabInstance: {fileID: 981041980773911745}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1 &1283714402
 GameObject:
   m_ObjectHideFlags: 0
@@ -26759,6 +26781,14 @@ PrefabInstance:
       propertyPath: m_fontColor32.rgba
       value: 4294967295
       objectReference: {fileID: 0}
+    - target: {fileID: 1257412556231054674, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: quitButton
+      value: 
+      objectReference: {fileID: 1278639320}
+    - target: {fileID: 1257412556231054674, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: resumeButton
+      value: 
+      objectReference: {fileID: 235812169}
     - target: {fileID: 1287427036766766560, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
       propertyPath: m_Type
       value: 1
@@ -26898,6 +26928,42 @@ PrefabInstance:
     - target: {fileID: 3300006385465939857, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3386748558826544543, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3386748558826544543, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3386748558826544543, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3386748558826544543, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3386748558826544543, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3386748558826544543, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3386748558826544543, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3512235086696373355, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_fontSize
+      value: 111.38
+      objectReference: {fileID: 0}
+    - target: {fileID: 3512235086696373355, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 111.38
       objectReference: {fileID: 0}
     - target: {fileID: 4102209408178939835, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
       propertyPath: m_fontSize
@@ -27130,6 +27196,14 @@ PrefabInstance:
     - target: {fileID: 8002260694175843708, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
       propertyPath: m_hasFontAssetChanged
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8271773077775657432, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 417.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8271773077775657432, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 259
       objectReference: {fileID: 0}
     - target: {fileID: 8361630573509257899, guid: b887eb7d43b6fd04090c2e175e05f5ba, type: 3}
       propertyPath: m_fontSize

@@ -189,8 +189,17 @@ namespace Game
             var full = _lineFullText;
             StopAllTyping();
 
-            if (lineText != null) lineText.text = full;
-            if (nameText != null && animateName) nameText.text = _nameFullText;
+            if (lineText != null)
+            {
+                lineText.text = full;
+                lineText.maxVisibleCharacters = int.MaxValue;
+            }
+
+            if (nameText != null && animateName)
+            {
+                nameText.text = _nameFullText;
+                nameText.maxVisibleCharacters = int.MaxValue;
+            }
 
             LineTypingCompleted?.Invoke();
             return true;
@@ -208,6 +217,7 @@ namespace Game
             if (charactersPerSecond <= 0f || string.IsNullOrEmpty(_lineFullText))
             {
                 lineText.text = _lineFullText;
+                lineText.maxVisibleCharacters = int.MaxValue;
                 IsTyping = false;
                 LineTypingCompleted?.Invoke();
                 return;
@@ -261,6 +271,11 @@ namespace Game
                 _typeLineRoutine = null;
             }
             IsTyping = false;
+
+            // Сбрасываем лимит видимых символов, иначе после StopCoroutine
+            // текст останется «обрезанным» на текущем значении maxVisibleCharacters.
+            if (lineText != null)
+                lineText.maxVisibleCharacters = int.MaxValue;
         }
 
         private void StopAllTyping()
@@ -279,6 +294,7 @@ namespace Game
             if (charactersPerSecond <= 0f || string.IsNullOrEmpty(_nameFullText))
             {
                 nameText.text = _nameFullText;
+                nameText.maxVisibleCharacters = int.MaxValue;
                 return;
             }
 
